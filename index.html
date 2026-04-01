@@ -6,7 +6,6 @@
     <title>フラサ グスティ アッロー - 宿命の対決 -</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Yuji+Syuku&display=swap" rel="stylesheet">
     <style>
-        /* CSSデザイン部分は変更なしのため省略せずにそのまま入れます */
         :root { --primary-color: #1a1a1a; --bg-color: #f7f9fa; --card-bg: #ffffff; --accent-a: #2b5c8f; --accent-b: #8f2b3e; --gold: #d4af37; --border-radius: 16px; }
         body { font-family: 'Noto Serif JP', serif; background-color: var(--bg-color); color: var(--primary-color); text-align: center; padding: 20px 15px; margin: 0; }
         .container { max-width: 800px; margin: 0 auto; padding-bottom: 40px; }
@@ -90,57 +89,53 @@
     </div>
 
     <script>
-        // APIキーを削除し、安全な自分のサーバー（/api/gemini）へ通信する形に変更
-        let currentKaminokuA = "";
-        let currentShimonokuA = "";
-        let currentKaminokuB = "";
-        let currentShimonokuB = "";
+        let currentKaminokuA = ""; let currentShimonokuA = "";
+        let currentKaminokuB = ""; let currentShimonokuB = "";
 
         function toggleEye(inputId, iconElement) {
             const input = document.getElementById(inputId);
-            if (input.type === "text") {
-                input.type = "password";
-                iconElement.innerText = "👁️"; 
-            } else {
-                input.type = "text";
-                iconElement.innerText = "🙈"; 
-            }
+            if (input.type === "text") { input.type = "password"; iconElement.innerText = "👁️"; } 
+            else { input.type = "text"; iconElement.innerText = "🙈"; }
         }
 
         async function callAI(prompt) {
-            // 自分のサーバーのAPIを呼び出す
             const response = await fetch('/api/gemini', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ prompt: prompt })
             });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(`エラーが発生しました。`);
-            }
+            if (!response.ok) { throw new Error(`制限を超えました。約40秒待ってから再度お試しください。`); }
             const data = await response.json();
             let rawText = data.candidates[0].content.parts[0].text;
             rawText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
             return JSON.parse(rawText);
         }
 
-        function createGenPrompt(input) {
-            return `あなたは雅で少しカオスな歌人です。ユーザーの上の句「${input}」に続く、衝撃的でエモい「下の句」を一つだけ生成してください。
+        // ★変更点：AとBの下の句を「1回のお願い」でまとめて作らせる！
+        function createCombinedGenPrompt(inputA, inputB) {
+            return `あなたは雅で少しカオスな歌人です。2人のプレイヤーが上の句を詠みました。
+            プレイヤーA: 「${inputA}」
+            プレイヤーB: 「${inputB}」
+            それぞれに続く、衝撃的でエモい「下の句」を一つずつ生成してください。
             返信は以下のJSON形式のみで行ってください。
-            {"shimonoku": "ここに下の句"}`;
+            {
+              "shimonokuA": "プレイヤーAの下の句",
+              "shimonokuB": "プレイヤーBの下の句"
+            }`;
         }
 
-        function createScorePrompt(kami, shimo) {
+        // ★変更点：AとBの採点も「1回のお願い」でまとめてやらせる！
+        function createCombinedScorePrompt(kamiA, shimoA, kamiB, shimoB) {
             return `あなたは「フラサ グスティ アッロー」の非常に厳格で毒舌な審査員AIです。
-            忖度やお世辞は一切不要です。凡庸、意味不明、またはつまらない句には容赦なく低い点数（0〜3点など）をつけ、辛辣で小馬鹿にしたような毒舌コメントで徹底的に斬り捨ててください。
-            ただし、本当に心が震えるほど素晴らしい、奇跡的な組み合わせだと感じた場合のみ、高い点数を与え、素直に絶賛してください。
-            完成した句「${kami} ${shimo}」を、以下の5項目（各10点満点）で採点し、その評価ポイント（理由）を短く添えて、日本語のJSONで返してください。
-            ・芸術点（文字や言葉の響きの美しさ）
-            ・知的点（知識や奥深さ、言葉遊び）
-            ・インパク点（心への衝撃やカオス度）
-            ・運命点（この上の句と下の句が出会った奇跡）
-            ・エモ点（感情の揺さぶり、エモさ）
-            形式：{"scores": {"芸術点": {"score": 2, "comment": "凡庸すぎてあくびが出ます。"}, "知的点": {"score": 1, "comment": "知性の欠片も感じられません。"}, "インパク点": {"score": 8, "comment": "不快な意味で衝撃的です。"}, "運命点": {"score": 0, "comment": "出会うべきではありませんでした。"}, "エモ点": {"score": 9, "comment": "悔しいですが、この狂気には心惹かれます。"}}}`;
+            忖度やお世辞は一切不要です。凡庸な句には容赦なく低い点数をつけ、辛辣で小馬鹿にした毒舌コメントで斬り捨ててください。本当に素晴らしい場合のみ絶賛してください。
+            以下の2つの句をそれぞれ5項目（各10点満点）で採点し、日本語のJSONで返してください。
+            プレイヤーAの句: 「${kamiA} ${shimoA}」
+            プレイヤーBの句: 「${kamiB} ${shimoB}」
+            形式：
+            {
+              "playerA": { "scores": {"芸術点": {"score": 2, "comment": "凡庸です。"}, "知的点": {"score": 1, "comment": "意味不明です。"}, "インパク点": {"score": 8, "comment": "不快です。"}, "運命点": {"score": 0, "comment": "出会うべきではなかった。"}, "エモ点": {"score": 9, "comment": "狂気に惹かれます。"}} },
+              "playerB": { "scores": {"芸術点": {"score": 2, "comment": "凡庸です。"}, "知的点": {"score": 1, "comment": "意味不明です。"}, "インパク点": {"score": 8, "comment": "不快です。"}, "運命点": {"score": 0, "comment": "出会うべきではなかった。"}, "エモ点": {"score": 9, "comment": "狂気に惹かれます。"}} }
+            }`;
         }
 
         async function generateBattleShimonokus() {
@@ -151,14 +146,15 @@
             const status = document.getElementById("status");
             const btnGen = document.getElementById("btn-generate");
             const btnScore = document.getElementById("btn-score");
-            status.innerText = "AIがプレイヤーAの下の句を思考中...";
+            status.innerText = "AIが両者の下の句を同時に思考中...";
             btnGen.disabled = true;
+            
             try {
-                const resultA = await callAI(createGenPrompt(currentKaminokuA));
-                currentShimonokuA = resultA.shimonoku;
-                status.innerText = "AIがプレイヤーBの下の句を思考中...";
-                const resultB = await callAI(createGenPrompt(currentKaminokuB));
-                currentShimonokuB = resultB.shimonoku;
+                // 1回の通信でAとBをまとめて生成
+                const result = await callAI(createCombinedGenPrompt(currentKaminokuA, currentKaminokuB));
+                currentShimonokuA = result.shimonokuA;
+                currentShimonokuB = result.shimonokuB;
+                
                 document.getElementById("full-poem-a").innerText = `${currentKaminokuA}　${currentShimonokuA}`;
                 document.getElementById("full-poem-b").innerText = `${currentKaminokuB}　${currentShimonokuB}`;
                 document.getElementById("result-box-a").style.display = "block";
@@ -175,43 +171,3 @@
         function buildScoreHtml(scoresObj) {
             let html = ""; let total = 0;
             for (const key in scoresObj) {
-                const score = scoresObj[key].score; const comment = scoresObj[key].comment;
-                html += `<div class="score-box"><div class="score-title"><span>${key}</span><span class="score-value">${score} / 10</span></div><div class="score-comment">${comment}</div></div>`;
-                total += score;
-            }
-            return { html, total };
-        }
-
-        async function getBattleScoring() {
-            const status = document.getElementById("status");
-            const btnScore = document.getElementById("btn-score");
-            status.innerText = "AIが毒舌審査の準備中...";
-            btnScore.disabled = true;
-            try {
-                const scoreResultA = await callAI(createScorePrompt(currentKaminokuA, currentShimonokuA));
-                status.innerText = "AIがプレイヤーBを容赦なく審査中...";
-                const scoreResultB = await callAI(createScorePrompt(currentKaminokuB, currentShimonokuB));
-                const aData = buildScoreHtml(scoreResultA.scores);
-                const bData = buildScoreHtml(scoreResultB.scores);
-                document.getElementById("score-details-a").innerHTML = aData.html;
-                document.getElementById("total-result-a").innerText = `${aData.total} 点`;
-                document.getElementById("score-area-a").style.display = "block";
-                document.getElementById("score-details-b").innerHTML = bData.html;
-                document.getElementById("total-result-b").innerText = `${bData.total} 点`;
-                document.getElementById("score-area-b").style.display = "block";
-                let winnerText = "";
-                if (aData.total > bData.total) { winnerText = "👑 プレイヤーAの勝利"; } 
-                else if (bData.total > aData.total) { winnerText = "👑 プレイヤーBの勝利"; } 
-                else { winnerText = "🤝 引き分け"; }
-                const announce = document.getElementById("winner-announcement");
-                announce.innerText = winnerText; announce.style.display = "block";
-                status.innerText = "容赦ない審査が終了しました。";
-                btnScore.style.display = "none";
-                document.getElementById("btn-reload").style.display = "block"; 
-            } catch (e) {
-                alert(e.message); btnScore.disabled = false; status.innerText = "審査に失敗しました。";
-            }
-        }
-    </script>
-</body>
-</html>
