@@ -14,7 +14,6 @@
         .battle-inputs { display: flex; flex-direction: column; gap: 20px; margin-bottom: 30px; }
         @media (min-width: 600px) { .battle-inputs { flex-direction: row; } }
         .player-box { background: var(--card-bg); padding: 25px 20px; border-radius: var(--border-radius); flex: 1; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border-top: 4px solid #ccc; transition: transform 0.3s; }
-        .player-box:hover { transform: translateY(-2px); }
         .player-a-box { border-top-color: var(--accent-a); }
         .player-b-box { border-top-color: var(--accent-b); }
         .player-box h2 { margin: 0 0 15px 0; font-size: 1.1em; font-weight: 700; }
@@ -26,7 +25,7 @@
         .action-btn { font-family: 'Noto Serif JP', serif; font-weight: 700; font-size: 1.1rem; padding: 15px 30px; width: 100%; max-width: 350px; cursor: pointer; background-color: var(--primary-color); color: white; border: none; border-radius: 30px; margin: 10px auto; display: block; }
         .action-btn:disabled { background-color: #ccc; cursor: not-allowed; }
         #btn-score { background-color: var(--gold); color: #000; }
-        #status { font-size: 0.9rem; color: #666; margin: 15px 0; height: 1.5em; }
+        #status { font-size: 0.9rem; color: #666; margin: 15px 0; height: 1.5em; font-weight: bold; }
         .battle-results { display: flex; flex-direction: column; gap: 20px; margin-top: 30px; }
         @media (min-width: 768px) { .battle-results { flex-direction: row; align-items: flex-start;} }
         .result-box { background: var(--card-bg); border-radius: var(--border-radius); padding: 30px 20px; flex: 1; display: none; }
@@ -98,43 +97,73 @@
             else { input.type = "text"; iconElement.innerText = "🙈"; }
         }
 
+        // 🛡️ 最強の安全装置を組み込んだ通信関数
         async function callAI(prompt) {
             const response = await fetch('/api/gemini', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ prompt: prompt })
             });
-            if (!response.ok) { throw new Error(`制限を超えました。約40秒待ってから再度お試しください。`); }
+            
             const data = await response.json();
+            
+            if (!response.ok) {
+                // サーバーエラーや回数制限のエラーを確実に捕まえる
+                if(data.error && data.error.includes("429") || data.error && data.error.includes("exceeded")) {
+                    throw new Error("AIが混み合っています。約1分待ってからお試しください。");
+                }
+                throw new Error("通信エラーが発生しました。");
+            }
+            
             let rawText = data.candidates[0].content.parts[0].text;
-            rawText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
-            return JSON.parse(rawText);
+            
+            // 🔥 AIが余計な日本語を混ぜても、強制的にJSONの部分だけを切り抜く最強の正規表現
+            const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) {
+                console.error("AIの変な回答:", rawText);
+                throw new Error("AIがルールを無視しました！もう一度ボタンを押してください。");
+            }
+            
+            try {
+                return JSON.parse(jsonMatch[0]);
+            } catch (err) {
+                console.error("変換エラー:", err, "抜き出した文字:", jsonMatch[0]);
+                throw new Error("AIの審査結果が読み取れませんでした。もう一度お試しください。");
+            }
         }
 
-        // ★変更点：AとBの下の句を「1回のお願い」でまとめて作らせる！
         function createCombinedGenPrompt(inputA, inputB) {
-            return `あなたは雅で少しカオスな歌人です。2人のプレイヤーが上の句を詠みました。
+            return `あなたは雅で少しカオスな歌人です。2人のプレイヤーの上の句に続く、衝撃的でエモい「下の句」を一つずつ生成してください。
             プレイヤーA: 「${inputA}」
             プレイヤーB: 「${inputB}」
-            それぞれに続く、衝撃的でエモい「下の句」を一つずつ生成してください。
-            返信は以下のJSON形式のみで行ってください。
+            返信は以下のJSON形式のみで行ってください。他の言葉は絶対に不要です。
             {
               "shimonokuA": "プレイヤーAの下の句",
               "shimonokuB": "プレイヤーBの下の句"
             }`;
         }
 
-        // ★変更点：AとBの採点も「1回のお願い」でまとめてやらせる！
         function createCombinedScorePrompt(kamiA, shimoA, kamiB, shimoB) {
-            return `あなたは「フラサ グスティ アッロー」の非常に厳格で毒舌な審査員AIです。
-            忖度やお世辞は一切不要です。凡庸な句には容赦なく低い点数をつけ、辛辣で小馬鹿にした毒舌コメントで斬り捨ててください。本当に素晴らしい場合のみ絶賛してください。
+            return `あなたは「フラサ グスティ アッロー」の非常に厳格で毒舌な審査員AIです。忖度やお世辞は一切不要です。凡庸な句には容赦なく低い点数をつけ、辛辣で小馬鹿にした毒舌コメントで斬り捨ててください。
             以下の2つの句をそれぞれ5項目（各10点満点）で採点し、日本語のJSONで返してください。
-            プレイヤーAの句: 「${kamiA} ${shimoA}」
-            プレイヤーBの句: 「${kamiB} ${shimoB}」
+            プレイヤーA: 「${kamiA} ${shimoA}」
+            プレイヤーB: 「${kamiB} ${shimoB}」
             形式：
             {
-              "playerA": { "scores": {"芸術点": {"score": 2, "comment": "凡庸です。"}, "知的点": {"score": 1, "comment": "意味不明です。"}, "インパク点": {"score": 8, "comment": "不快です。"}, "運命点": {"score": 0, "comment": "出会うべきではなかった。"}, "エモ点": {"score": 9, "comment": "狂気に惹かれます。"}} },
-              "playerB": { "scores": {"芸術点": {"score": 2, "comment": "凡庸です。"}, "知的点": {"score": 1, "comment": "意味不明です。"}, "インパク点": {"score": 8, "comment": "不快です。"}, "運命点": {"score": 0, "comment": "出会うべきではなかった。"}, "エモ点": {"score": 9, "comment": "狂気に惹かれます。"}} }
+              "playerA": {
+                "芸術点": {"score": 2, "comment": "凡庸です。"},
+                "知的点": {"score": 1, "comment": "意味不明です。"},
+                "インパク点": {"score": 8, "comment": "不快です。"},
+                "運命点": {"score": 0, "comment": "出会うべきではなかった。"},
+                "エモ点": {"score": 9, "comment": "狂気に惹かれます。"}
+              },
+              "playerB": {
+                "芸術点": {"score": 2, "comment": "凡庸です。"},
+                "知的点": {"score": 1, "comment": "意味不明です。"},
+                "インパク点": {"score": 8, "comment": "不快です。"},
+                "運命点": {"score": 0, "comment": "出会うべきではなかった。"},
+                "エモ点": {"score": 9, "comment": "狂気に惹かれます。"}
+              }
             }`;
         }
 
@@ -146,14 +175,14 @@
             const status = document.getElementById("status");
             const btnGen = document.getElementById("btn-generate");
             const btnScore = document.getElementById("btn-score");
+            
             status.innerText = "AIが両者の下の句を同時に思考中...";
             btnGen.disabled = true;
             
             try {
-                // 1回の通信でAとBをまとめて生成
                 const result = await callAI(createCombinedGenPrompt(currentKaminokuA, currentKaminokuB));
-                currentShimonokuA = result.shimonokuA;
-                currentShimonokuB = result.shimonokuB;
+                currentShimonokuA = result.shimonokuA || "（AIが詠み忘れました）";
+                currentShimonokuB = result.shimonokuB || "（AIが詠み忘れました）";
                 
                 document.getElementById("full-poem-a").innerText = `${currentKaminokuA}　${currentShimonokuA}`;
                 document.getElementById("full-poem-b").innerText = `${currentKaminokuB}　${currentShimonokuB}`;
@@ -168,6 +197,56 @@
             }
         }
 
+        // 🛡️ 点数が一部欠けていてもクラッシュしない安全な組み立て関数
         function buildScoreHtml(scoresObj) {
             let html = ""; let total = 0;
+            if (!scoresObj) return { html: "<p>審査不能</p>", total: 0 };
+            
             for (const key in scoresObj) {
+                if (scoresObj[key] && scoresObj[key].score !== undefined) {
+                    const score = Number(scoresObj[key].score) || 0;
+                    const comment = scoresObj[key].comment || "";
+                    html += `<div class="score-box"><div class="score-title"><span>${key}</span><span class="score-value">${score} / 10</span></div><div class="score-comment">${comment}</div></div>`;
+                    total += score;
+                }
+            }
+            return { html, total };
+        }
+
+        async function getBattleScoring() {
+            const status = document.getElementById("status");
+            const btnScore = document.getElementById("btn-score");
+            status.innerText = "AIが両者を容赦なく審査中...";
+            btnScore.disabled = true;
+            
+            try {
+                const scoreResult = await callAI(createCombinedScorePrompt(currentKaminokuA, currentShimonokuA, currentKaminokuB, currentShimonokuB));
+                
+                const aData = buildScoreHtml(scoreResult.playerA);
+                const bData = buildScoreHtml(scoreResult.playerB);
+                
+                document.getElementById("score-details-a").innerHTML = aData.html;
+                document.getElementById("total-result-a").innerText = `${aData.total} 点`;
+                document.getElementById("score-area-a").style.display = "block";
+                
+                document.getElementById("score-details-b").innerHTML = bData.html;
+                document.getElementById("total-result-b").innerText = `${bData.total} 点`;
+                document.getElementById("score-area-b").style.display = "block";
+                
+                let winnerText = "";
+                if (aData.total > bData.total) { winnerText = "👑 プレイヤーAの勝利"; } 
+                else if (bData.total > aData.total) { winnerText = "👑 プレイヤーBの勝利"; } 
+                else { winnerText = "🤝 引き分け"; }
+                
+                const announce = document.getElementById("winner-announcement");
+                announce.innerText = winnerText; announce.style.display = "block";
+                status.innerText = "容赦ない審査が終了しました。";
+                btnScore.style.display = "none";
+                document.getElementById("btn-reload").style.display = "block"; 
+            } catch (e) {
+                alert(e.message); btnScore.disabled = false; status.innerText = "審査に失敗しました。";
+            }
+        }
+    </script>
+</body>
+</html>
