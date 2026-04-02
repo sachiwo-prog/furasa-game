@@ -31,7 +31,6 @@
         .player-a-color { color: var(--accent-a); }
         .player-b-color { color: var(--accent-b); }
         
-        /* 隠す機能を削除し、スッキリしたテキスト入力に */
         input[type="text"] { font-size: 1rem; padding: 15px; width: 100%; box-sizing: border-box; border: 1px solid #e0e0e0; border-radius: 8px; font-family: inherit; background-color: #fafafa; outline: none; transition: 0.3s; text-align: center;}
         input:focus { background-color: #fff; border-color: #aaa; box-shadow: 0 0 0 3px rgba(0,0,0,0.05); }
         input:disabled { background-color: #eee; color: #888; cursor: not-allowed; }
@@ -67,11 +66,11 @@
             border: 1px solid #e1d8c1;
             box-shadow: 2px 4px 12px rgba(0,0,0,0.08);
             padding: 40px 20px;
-            min-height: 250px; /* 短冊の長さ */
+            min-height: 250px;
             border-radius: 2px;
             color: #222;
             letter-spacing: 0.15em;
-            line-height: 2.2; /* 行間 */
+            line-height: 2.2;
             text-align: left;
         }
         .tanzaku .shimo-line {
@@ -184,7 +183,7 @@
                 <li>片方の詠み人が「新しい部屋を作る」を押し、表示された4桁の合言葉をもう一人に教えます。</li>
                 <li>もう片方の詠み人は「合言葉」を入力して「部屋に入る」を押します。</li>
                 <li>お互いに「上の句」を入力し、「準備完了」を押します。</li>
-                <li>2人とも入力が終わると、AIが自動で「下の句」を生成し、毒舌審査員が厳しく採点して勝敗を決めます。</li>
+                <li>2人とも入力が終わると、神（AI）が自動で「下の句」を生成し、毒舌審査員が厳しく採点して勝敗を決めます。</li>
             </ol>
 
             <h3>評価基準（合計50点満点）</h3>
@@ -194,7 +193,7 @@
                 <li><strong>知的点：</strong> 句に込められた知識、奥深さ、言葉遊びのセンス。</li>
                 <li><strong>インパク点：</strong> 読んだ瞬間の心への衝撃、予想を裏切るカオス度。</li>
                 <li><strong>エモ点：</strong> 感情をどれだけ激しく揺さぶるか。</li>
-                <li><strong>運命点：</strong> 人間の「上の句」とAIの「下の句」が出会った奇跡的な確率。</li>
+                <li><strong>運命点：</strong> 人間の「上の句」と神の「下の句」が出会った奇跡的な確率。</li>
             </ul>
         </div>
     </div>
@@ -239,7 +238,7 @@
                 startGameUI();
             } catch (e) {
                 console.error("Room Create Error:", e);
-                alert("部屋の作成に失敗しました。ルールの設定（true）がされているか確認してください。");
+                alert("部屋の作成に失敗しました。通信環境を確認してください。");
             }
         });
 
@@ -299,11 +298,9 @@
             const myInput = document.getElementById(`kaminoku-${myRole.toLowerCase()}`);
             const otherInput = document.getElementById(`kaminoku-${myRole === "A" ? "b" : "a"}`);
             
-            // パスワードを廃止し、通常のテキストフィールドに
-            myInput.type = "text";
+            myInput.disabled = false;
             myInput.placeholder = "あなたの上の句を入力";
             
-            otherInput.type = "text";
             otherInput.disabled = true;
             otherInput.placeholder = "相手が入力中...";
 
@@ -346,7 +343,6 @@
                     document.getElementById("btn-submit").style.display = "none";
                     
                     if (data.resultData && data.resultData.shimonoku) {
-                        // 短冊用にHTMLを組み立て（上の句と下の句を分ける）
                         document.getElementById("full-poem-a").innerHTML = `
                             <div>${data.kaminokuA}</div>
                             <div class="shimo-line">${data.resultData.shimonoku.A}</div>
@@ -375,12 +371,23 @@
                 body: JSON.stringify({ prompt: prompt })
             });
             const data = await response.json();
-            if (!response.ok) throw new Error("通信エラー");
+            
+            if (!response.ok) {
+                if (data.error && (JSON.stringify(data.error).includes("429") || JSON.stringify(data.error).includes("exceeded"))) {
+                    throw new Error("LIMIT");
+                }
+                throw new Error("NETWORK");
+            }
             
             const rawText = data.candidates[0].content.parts[0].text;
             const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) throw new Error("解析エラー");
-            return JSON.parse(jsonMatch[0]);
+            if (!jsonMatch) throw new Error("PARSE");
+            
+            try {
+                return JSON.parse(jsonMatch[0]);
+            } catch(e) {
+                throw new Error("PARSE");
+            }
         }
 
         async function executeAIGeneration(kamiA, kamiB) {
@@ -410,7 +417,26 @@
 
             } catch (error) {
                 console.error(error);
-                alert("AIの処理中にエラーが発生しました。トップに戻ってやり直してください。");
+                
+                // 状態をエラーからやり直せるようにデータベースをリセット
+                await update(ref(db, 'rooms/' + currentRoom), { 
+                    status: "playing", 
+                    readyA: false, 
+                    readyB: false 
+                });
+
+                if (error.message === "LIMIT") {
+                    alert("【API上限】AIが混み合っています（制限到達）。しばらく待つか、別のAPIキーをお試しください。");
+                } else if (error.message === "PARSE") {
+                    alert("【AIの気まぐれ】神が言葉を間違えました！もう一度「上の句を詠む」ボタンを押して再挑戦してください。");
+                } else {
+                    alert("【通信エラー】AIサーバーとの接続に失敗しました。トップに戻ってやり直してください。");
+                }
+                
+                // ボタンをもう一度押せるように復活させる
+                document.getElementById("btn-submit").disabled = false;
+                document.getElementById(`kaminoku-${myRole.toLowerCase()}`).disabled = false;
+                isProcessingAPI = false;
             }
         }
 
