@@ -6,19 +6,18 @@
     <title>フラサ グスティ アッロー - オンライン対戦 -</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Yuji+Syuku&display=swap" rel="stylesheet">
     <style>
+        /* CSSはそのままです */
         :root { --primary-color: #1a1a1a; --bg-color: #f7f9fa; --card-bg: #ffffff; --accent-a: #2b5c8f; --accent-b: #8f2b3e; --gold: #d4af37; --border-radius: 16px; }
         body { font-family: 'Noto Serif JP', serif; background-color: var(--bg-color); color: var(--primary-color); text-align: center; padding: 20px 15px; margin: 0; }
         .container { max-width: 800px; margin: 0 auto; padding-bottom: 40px; }
         h1 { font-family: 'Yuji Syuku', serif; font-size: clamp(2em, 5vw, 2.5em); margin: 10px 0 20px; color: var(--primary-color); letter-spacing: 0.1em; position: relative; display: inline-block; }
         h1::after { content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); width: 40px; height: 3px; background-color: var(--gold); border-radius: 2px; }
         
-        /* ロビー（部屋作り）画面 */
         #lobby-section { background: var(--card-bg); padding: 40px 20px; border-radius: var(--border-radius); box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-top: 30px; }
         .room-input { font-size: 1.2rem; padding: 12px; width: 150px; text-align: center; letter-spacing: 0.2em; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 15px; }
         .divider { margin: 30px 0; border-bottom: 1px dashed #ccc; position: relative; }
         .divider span { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--card-bg); padding: 0 15px; color: #888; font-size: 0.9em; }
         
-        /* ゲーム画面（対戦中） */
         #game-section { display: none; margin-top: 20px; }
         .room-info { background: #333; color: #fff; padding: 10px 20px; border-radius: 30px; display: inline-block; margin-bottom: 25px; font-weight: bold; letter-spacing: 0.05em; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .room-info span { color: var(--gold); font-size: 1.2em; margin-left: 10px; }
@@ -70,12 +69,12 @@
 
         <div id="lobby-section">
             <h3 style="color:#555; margin-top:0;">オンライン対戦</h3>
-            <button class="action-btn" onclick="createRoom()" style="background-color: var(--accent-a);">＋ 新しい部屋を作る<br><small>（あなたがプレイヤーAになります）</small></button>
+            <button id="btn-create-room" class="action-btn" style="background-color: var(--accent-a);">＋ 新しい部屋を作る<br><small>（あなたがプレイヤーAになります）</small></button>
             
             <div class="divider"><span>または</span></div>
             
             <input type="text" id="join-room-id" class="room-input" placeholder="合言葉 (4桁)" maxlength="4">
-            <button class="action-btn" onclick="joinRoom()" style="background-color: var(--accent-b);">➜ 部屋に入る<br><small>（あなたがプレイヤーBになります）</small></button>
+            <button id="btn-join-room" class="action-btn" style="background-color: var(--accent-b);">➜ 部屋に入る<br><small>（あなたがプレイヤーBになります）</small></button>
             <div id="lobby-error" style="color: red; margin-top: 10px; font-size: 0.9em;"></div>
         </div>
 
@@ -96,7 +95,7 @@
                 </div>
             </div>
 
-            <button id="btn-submit" class="action-btn" onclick="submitKaminoku()">上の句を詠む（準備完了）</button>
+            <button id="btn-submit" class="action-btn">上の句を詠む（準備完了）</button>
             <div id="status">相手の入力を待っています...</div>
 
             <div id="winner-announcement"></div>
@@ -119,20 +118,19 @@
                     </div>
                 </div>
             </div>
-            <button id="btn-reload" class="action-btn" onclick="location.reload()" style="display:none; margin-top:40px; background-color:#555;">トップに戻る</button>
+            <button id="btn-reload" class="action-btn" style="display:none; margin-top:40px; background-color:#555;">トップに戻る</button>
         </div>
     </div>
 
     <script type="module">
-        // Firebaseのモジュールを読み込む
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+        // ★ご提示いただいたバージョン（12.11.0）に合わせました
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
-        // ★いただいた設定情報をここにセット！
         const firebaseConfig = {
             apiKey: "AIzaSyCGNQ-l0LyurZSbOnxySRFVHJYLykm0qLc",
             authDomain: "furasa-game.firebaseapp.com",
-            databaseURL: "https://furasa-game-default-rtdb.firebaseio.com", // 念のため追加
+            databaseURL: "https://furasa-game-default-rtdb.firebaseio.com", // ここがないと動かない場合があります
             projectId: "furasa-game",
             storageBucket: "furasa-game.firebasestorage.app",
             messagingSenderId: "1091848528817",
@@ -142,46 +140,66 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // 自分の状態（AかBか）と部屋番号を保存する変数
         let myRole = ""; 
         let currentRoom = "";
-        let isProcessingAPI = false; // AI呼び出しの重複防止
+        let isProcessingAPI = false;
 
         // ==========================================
-        // 1. ロビー機能（部屋を作る・入る）
+        // ★ボタンを押した時の動きを確実に行うための紐付け
         // ==========================================
-        window.createRoom = async () => {
-            // 4桁のランダムな合言葉を生成
-            currentRoom = Math.floor(1000 + Math.random() * 9000).toString();
-            myRole = "A";
-            
-            // データベースに部屋の初期データを書き込む
-            await set(ref(db, 'rooms/' + currentRoom), {
-                status: "waiting", // waiting -> playing -> generating -> scoring -> finished
-                kaminokuA: "", kaminokuB: "",
-                readyA: false, readyB: false,
-                resultData: null
-            });
-            
-            startGameUI();
-        };
+        document.getElementById("btn-create-room").addEventListener("click", async () => {
+            try {
+                currentRoom = Math.floor(1000 + Math.random() * 9000).toString();
+                myRole = "A";
+                await set(ref(db, 'rooms/' + currentRoom), {
+                    status: "waiting",
+                    kaminokuA: "", kaminokuB: "",
+                    readyA: false, readyB: false,
+                    resultData: null
+                });
+                startGameUI();
+            } catch (e) {
+                alert("データベースへの接続に失敗しました。");
+                console.error(e);
+            }
+        });
 
-        window.joinRoom = async () => {
+        document.getElementById("btn-join-room").addEventListener("click", async () => {
             const inputId = document.getElementById("join-room-id").value;
             if (inputId.length !== 4) return alert("4桁の合言葉を入力してください");
             
-            // 部屋が存在するか確認
-            const snapshot = await get(ref(db, 'rooms/' + inputId));
-            if (snapshot.exists()) {
-                currentRoom = inputId;
-                myRole = "B";
-                // プレイヤーBが入室したので、ステータスをplayingにする
-                await update(ref(db, 'rooms/' + currentRoom), { status: "playing" });
-                startGameUI();
-            } else {
-                document.getElementById("lobby-error").innerText = "その部屋は見つかりません。合言葉を確認してください。";
+            try {
+                const snapshot = await get(ref(db, 'rooms/' + inputId));
+                if (snapshot.exists()) {
+                    currentRoom = inputId;
+                    myRole = "B";
+                    await update(ref(db, 'rooms/' + currentRoom), { status: "playing" });
+                    startGameUI();
+                } else {
+                    document.getElementById("lobby-error").innerText = "その部屋は見つかりません。合言葉を確認してください。";
+                }
+            } catch (e) {
+                alert("データベースへの接続に失敗しました。");
+                console.error(e);
             }
-        };
+        });
+
+        document.getElementById("btn-submit").addEventListener("click", async () => {
+            const myInput = document.getElementById(`kaminoku-${myRole.toLowerCase()}`).value;
+            if (!myInput) return alert("上の句を入力してください！");
+            
+            document.getElementById("btn-submit").disabled = true;
+            document.getElementById(`kaminoku-${myRole.toLowerCase()}`).disabled = true;
+
+            const updateData = {};
+            updateData[`kaminoku${myRole}`] = myInput;
+            updateData[`ready${myRole}`] = true;
+            await update(ref(db, 'rooms/' + currentRoom), updateData);
+        });
+
+        document.getElementById("btn-reload").addEventListener("click", () => {
+            location.reload();
+        });
 
         // 画面の切り替え設定
         function startGameUI() {
@@ -192,7 +210,6 @@
             const roleColor = myRole === "A" ? "var(--accent-a)" : "var(--accent-b)";
             document.getElementById("my-role-display").innerHTML = `<strong style="color:${roleColor}; font-size:1.5em;">プレイヤー${myRole}</strong>`;
             
-            // 自分の入力欄だけ有効にして、テキストが見えるようにする
             const myInput = document.getElementById(`kaminoku-${myRole.toLowerCase()}`);
             const otherInput = document.getElementById(`kaminoku-${myRole === "A" ? "b" : "a"}`);
             
@@ -202,30 +219,10 @@
             otherInput.disabled = true;
             otherInput.placeholder = "相手が入力中...";
 
-            // 部屋のデータをリアルタイム監視開始！
             listenToRoom();
         }
 
-        // ==========================================
-        // 2. 準備完了（詠む）ボタンの処理
-        // ==========================================
-        window.submitKaminoku = async () => {
-            const myInput = document.getElementById(`kaminoku-${myRole.toLowerCase()}`).value;
-            if (!myInput) return alert("上の句を入力してください！");
-            
-            document.getElementById("btn-submit").disabled = true;
-            document.getElementById(`kaminoku-${myRole.toLowerCase()}`).disabled = true;
-
-            // 自分が入力した句と、「準備完了」フラグをFirebaseに保存
-            const updateData = {};
-            updateData[`kaminoku${myRole}`] = myInput;
-            updateData[`ready${myRole}`] = true;
-            await update(ref(db, 'rooms/' + currentRoom), updateData);
-        };
-
-        // ==========================================
-        // 3. リアルタイム通信（相手の動きを監視する）
-        // ==========================================
+        // リアルタイム通信（相手の動きを監視する）
         function listenToRoom() {
             onValue(ref(db, 'rooms/' + currentRoom), async (snapshot) => {
                 const data = snapshot.val();
@@ -233,7 +230,6 @@
 
                 const statusEl = document.getElementById("status");
 
-                // --- UIの更新 ---
                 if (data.status === "waiting") {
                     statusEl.innerText = "プレイヤーBの参加を待っています...";
                 }
@@ -252,14 +248,12 @@
                 if (data.status === "generating") statusEl.innerText = "AIが両者の下の句を思考中...";
                 if (data.status === "scoring") statusEl.innerText = "AIが両者を容赦なく審査中...";
                 
-                // --- AIを動かす処理（★プレイヤーAのスマホだけが代表してAIを呼ぶ） ---
                 if (data.readyA && data.readyB && data.status === "playing" && myRole === "A" && !isProcessingAPI) {
                     isProcessingAPI = true;
                     await update(ref(db, 'rooms/' + currentRoom), { status: "generating" });
                     executeAIGeneration(data.kaminokuA, data.kaminokuB);
                 }
                 
-                // --- 結果の表示処理（AもBも両方動く） ---
                 if (data.status === "scoring" || data.status === "finished") {
                     document.getElementById("input-section").style.display = "none";
                     document.getElementById("btn-submit").style.display = "none";
@@ -279,9 +273,6 @@
             });
         }
 
-        // ==========================================
-        // 4. AIとの通信部分（エコモード安全装置版）
-        // ==========================================
         async function callVercelAPI(prompt) {
             const response = await fetch('/api/gemini', {
                 method: "POST",
@@ -297,23 +288,19 @@
             return JSON.parse(jsonMatch[0]);
         }
 
-        // プレイヤーAが代表して実行する一連のAI処理
         async function executeAIGeneration(kamiA, kamiB) {
             try {
-                // 1. 下の句を生成
                 const genPrompt = `あなたは雅でカオスな歌人です。以下の2人の上の句に続く「下の句」を生成しJSONで返してください。
                 A:「${kamiA}」 B:「${kamiB}」
                 形式: {"A": "Aの下の句", "B": "Bの下の句"}`;
                 
                 const shimoResult = await callVercelAPI(genPrompt);
                 
-                // Firebaseに下の句を保存し、ステータスを「審査中(scoring)」に進める
                 await update(ref(db, 'rooms/' + currentRoom), { 
                     status: "scoring",
                     "resultData/shimonoku": shimoResult
                 });
 
-                // 2. 審査を実行
                 const scorePrompt = `あなたは「フラサ グスティ アッロー」の毒舌審査員AIです。忖度なく、凡庸な句には低い点数と辛辣なコメントを。
                 A:「${kamiA} ${shimoResult.A}」 B:「${kamiB} ${shimoResult.B}」
                 5項目（各10点）で採点しJSONで返してください。
@@ -321,7 +308,6 @@
                 
                 const scoreResult = await callVercelAPI(scorePrompt);
 
-                // Firebaseに審査結果を保存し、ステータスを「完了(finished)」にする
                 await update(ref(db, 'rooms/' + currentRoom), { 
                     status: "finished",
                     "resultData/scores": scoreResult
@@ -333,9 +319,6 @@
             }
         }
 
-        // ==========================================
-        // 5. 最終結果の画面表示
-        // ==========================================
         function buildScoreHtml(scoresObj) {
             let html = ""; let total = 0;
             if (!scoresObj) return { html: "<p>審査不能</p>", total: 0 };
