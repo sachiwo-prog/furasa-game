@@ -52,7 +52,7 @@
         .result-box { background: var(--card-bg); border-radius: var(--border-radius); padding: 30px 20px; flex: 1; display: none; animation: fadeIn 0.8s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* 🔥 美しく進化した短冊デザイン 🔥 */
+        /* 🔥 短冊デザイン 🔥 */
         .tanzaku-wrapper {
             display: flex;
             justify-content: center;
@@ -90,16 +90,69 @@
         footer a { color: #555; text-decoration: underline; cursor: pointer; transition: 0.3s; }
         footer a:hover { color: var(--primary-color); }
 
+        /* 🔥 スマホ最適化：固定ボタン付きのモーダル（ヘルプ画面） 🔥 */
         .modal-overlay { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
-        .modal-content { background-color: var(--card-bg); margin: 10vh auto; padding: 30px; border-radius: var(--border-radius); width: 85%; max-width: 600px; max-height: 80vh; overflow-y: auto; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: slideDown 0.3s ease; position: relative; }
+        .modal-content { 
+            background-color: var(--card-bg); 
+            margin: 5vh auto; /* 少し上に詰めて画面を広く使う */
+            width: 90%; 
+            max-width: 600px; 
+            height: 85vh; /* 画面の85%を使う */
+            border-radius: var(--border-radius); 
+            display: flex; 
+            flex-direction: column; /* ヘッダー・本文・フッターを分ける */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+            animation: slideDown 0.3s ease; 
+        }
         @keyframes slideDown { from {transform: translateY(-30px); opacity: 0;} to {transform: translateY(0); opacity: 1;} }
-        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 28px; font-weight: bold; color: #aaa; cursor: pointer; transition: 0.3s; }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 2px solid var(--gold);
+            flex-shrink: 0; /* 縮まない（固定） */
+        }
+        .modal-header h2 { font-family: 'Yuji Syuku', serif; color: var(--primary-color); margin: 0; }
+        .close-btn { font-size: 32px; font-weight: bold; color: #aaa; cursor: pointer; transition: 0.3s; line-height: 1; }
         .close-btn:hover { color: #333; }
-        .modal-content h2 { font-family: 'Yuji Syuku', serif; color: var(--primary-color); border-bottom: 2px solid var(--gold); padding-bottom: 10px; margin-top: 0; }
-        .modal-content h3 { color: var(--accent-a); margin-top: 25px; font-size: 1.1em; }
-        .modal-content p, .modal-content li { font-size: 0.95rem; line-height: 1.6; color: #444; }
-        .modal-content ul, .modal-content ol { padding-left: 20px; }
-        .modal-content strong { color: var(--accent-b); }
+        
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto; /* ここだけがスクロールする */
+            flex-grow: 1; /* 残りのスペースを埋める */
+            text-align: left;
+        }
+        .modal-body h3 { color: var(--accent-a); margin-top: 20px; font-size: 1.1em; }
+        .modal-body h3:first-child { margin-top: 0; }
+        .modal-body p, .modal-body li { font-size: 0.95rem; line-height: 1.6; color: #444; }
+        .modal-body ul, .modal-body ol { padding-left: 20px; }
+        .modal-body strong { color: var(--accent-b); }
+        
+        .modal-footer {
+            padding: 15px;
+            text-align: center;
+            border-top: 1px solid #eee;
+            background-color: #fcfcfc;
+            flex-shrink: 0; /* 縮まない（固定） */
+            border-bottom-left-radius: var(--border-radius);
+            border-bottom-right-radius: var(--border-radius);
+        }
+        .btn-close-fixed {
+            background-color: #444;
+            color: white;
+            border: none;
+            padding: 12px 40px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Noto Serif JP', serif;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: 0.3s;
+        }
+        .btn-close-fixed:hover { background-color: #222; }
     </style>
 </head>
 <body>
@@ -172,30 +225,38 @@
 
     <div id="helpModal" class="modal-overlay">
         <div class="modal-content">
-            <span class="close-btn" onclick="window.closeModal()">&times;</span>
-            <h2>遊び方と解説</h2>
+            <div class="modal-header">
+                <h2>遊び方と解説</h2>
+                <span class="close-btn" onclick="window.closeModal()">&times;</span>
+            </div>
             
-            <h3>「フラサ グスティ アッロー」とは？</h3>
-            <p><strong>「Frasa Gusti Alloh」</strong>は、スンダ語で<strong>「神の句」</strong>を意味します。<br>
-            人間が詠んだ「上の句」に対し、神（AI）が予測不能な「下の句」を授け、それを厳格な審査員AIが容赦なく評価する、人間とAIによる新感覚のオンライン和歌バトルです。</p>
+            <div class="modal-body">
+                <h3>「フラサ グスティ アッロー」とは？</h3>
+                <p><strong>「Frasa Gusti Alloh」</strong>は、スンダ語で<strong>「神の句」</strong>を意味します。<br>
+                人間が詠んだ「上の句」に対し、神（AI）が予測不能な「下の句」を授け、それを厳格な審査員AIが容赦なく評価する、人間とAIによる新感覚のオンライン和歌バトルです。</p>
 
-            <h3>遊び方（オンライン対戦）</h3>
-            <ol>
-                <li>片方の詠み人が「新しい部屋を作る」を押し、表示された4桁の合言葉をもう一人に教えます。</li>
-                <li>もう片方の詠み人は「合言葉」を入力して「部屋に入る」を押します。</li>
-                <li>お互いに「上の句」を入力し、「準備完了」を押します。（※最大20文字。スペースで区切ると、短冊上で綺麗に改行されます）</li>
-                <li>2人とも入力が終わると、神が自動で「下の句」を生成し、毒舌審査員が厳しく採点して勝敗を決めます。</li>
-            </ol>
+                <h3>遊び方（オンライン対戦）</h3>
+                <ol>
+                    <li>片方の詠み人が「新しい部屋を作る」を押し、表示された4桁の合言葉をもう一人に教えます。</li>
+                    <li>もう片方の詠み人は「合言葉」を入力して「部屋に入る」を押します。</li>
+                    <li>お互いに「上の句」を入力し、「準備完了」を押します。（※最大20文字。スペースで区切ると、短冊上で綺麗に改行されます）</li>
+                    <li>2人とも入力が終わると、神が自動で「下の句」を生成し、毒舌審査員が厳しく採点して勝敗を決めます。</li>
+                </ol>
 
-            <h3>評価基準（合計50点満点）</h3>
-            <p>審査員AIは忖度を一切しません。以下の5項目（各10点）で厳格に審査し、凡庸な句は辛辣なコメントと共に斬り捨てられます。</p>
-            <ul>
-                <li><strong>芸術点：</strong> 文字の並びや言葉の響きの美しさ。</li>
-                <li><strong>知的点：</strong> 句に込められた知識、奥深さ、言葉遊びのセンス。</li>
-                <li><strong>インパク点：</strong> 読んだ瞬間の心への衝撃、予想を裏切るカオス度。</li>
-                <li><strong>エモ点：</strong> 感情をどれだけ激しく揺さぶるか。</li>
-                <li><strong>運命点：</strong> 人間の「上の句」と神の「下の句」が出会った奇跡的な確率。</li>
-            </ul>
+                <h3>評価基準（合計50点満点）</h3>
+                <p>審査員AIは忖度を一切しません。以下の5項目（各10点）で厳格に審査し、凡庸な句は辛辣なコメントと共に斬り捨てられます。</p>
+                <ul>
+                    <li><strong>芸術点：</strong> 文字の並びや言葉の響きの美しさ。</li>
+                    <li><strong>知的点：</strong> 句に込められた知識、奥深さ、言葉遊びのセンス。</li>
+                    <li><strong>インパク点：</strong> 読んだ瞬間の心への衝撃、予想を裏切るカオス度。</li>
+                    <li><strong>エモ点：</strong> 感情をどれだけ激しく揺さぶるか。</li>
+                    <li><strong>運命点：</strong> 人間の「上の句」と神の「下の句」が出会った奇跡的な確率。</li>
+                </ul>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn-close-fixed" onclick="window.closeModal()">閉じる</button>
+            </div>
         </div>
     </div>
 
@@ -300,7 +361,6 @@
             const otherInput = document.getElementById(`kaminoku-${myRole === "A" ? "b" : "a"}`);
             
             myInput.disabled = false;
-            // ★プレースホルダーにも文字数制限のヒントを追加
             myInput.placeholder = "最大20文字・スペースで改行";
             
             otherInput.disabled = true;
