@@ -52,7 +52,7 @@
         .result-box { background: var(--card-bg); border-radius: var(--border-radius); padding: 30px 20px; flex: 1; display: none; animation: fadeIn 0.8s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* 🔥 短冊デザイン 🔥 */
+        /* 🔥 美しく進化した短冊（散らし書き）デザイン 🔥 */
         .tanzaku-wrapper {
             display: flex;
             justify-content: center;
@@ -66,18 +66,14 @@
             border: 1px solid #e1d8c1;
             box-shadow: 2px 4px 12px rgba(0,0,0,0.08);
             padding: 30px 20px;
-            min-height: 400px;
+            min-height: 480px; /* 階段状に下がっても大丈夫なようにさらに長く設定 */
             border-radius: 2px;
             color: #222;
             letter-spacing: 0.15em;
             line-height: 2.2;
             text-align: left;
         }
-        .tanzaku .shimo-line {
-            margin-top: 3em; 
-            color: #222;
-        }
-
+        
         .score-box { margin: 12px 0; text-align: left; font-size: 0.95rem; line-height: 1.5; padding-bottom: 10px; border-bottom: 1px dashed #eee; }
         .score-title { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 6px; color: var(--primary-color); }
         .score-value { font-weight: bold; font-size: 1.1em; }
@@ -90,68 +86,36 @@
         footer a { color: #555; text-decoration: underline; cursor: pointer; transition: 0.3s; }
         footer a:hover { color: var(--primary-color); }
 
-        /* 🔥 スマホ最適化：固定ボタン付きのモーダル（ヘルプ画面） 🔥 */
+        /* スマホ最適化：固定ボタン付きのモーダル（ヘルプ画面） */
         .modal-overlay { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
         .modal-content { 
             background-color: var(--card-bg); 
-            margin: 5vh auto; /* 少し上に詰めて画面を広く使う */
+            margin: 5vh auto; 
             width: 90%; 
             max-width: 600px; 
-            height: 85vh; /* 画面の85%を使う */
+            height: 85vh; 
             border-radius: var(--border-radius); 
             display: flex; 
-            flex-direction: column; /* ヘッダー・本文・フッターを分ける */
+            flex-direction: column; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
             animation: slideDown 0.3s ease; 
         }
         @keyframes slideDown { from {transform: translateY(-30px); opacity: 0;} to {transform: translateY(0); opacity: 1;} }
         
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            border-bottom: 2px solid var(--gold);
-            flex-shrink: 0; /* 縮まない（固定） */
-        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 2px solid var(--gold); flex-shrink: 0; }
         .modal-header h2 { font-family: 'Yuji Syuku', serif; color: var(--primary-color); margin: 0; }
         .close-btn { font-size: 32px; font-weight: bold; color: #aaa; cursor: pointer; transition: 0.3s; line-height: 1; }
         .close-btn:hover { color: #333; }
         
-        .modal-body {
-            padding: 20px;
-            overflow-y: auto; /* ここだけがスクロールする */
-            flex-grow: 1; /* 残りのスペースを埋める */
-            text-align: left;
-        }
+        .modal-body { padding: 20px; overflow-y: auto; flex-grow: 1; text-align: left; }
         .modal-body h3 { color: var(--accent-a); margin-top: 20px; font-size: 1.1em; }
         .modal-body h3:first-child { margin-top: 0; }
         .modal-body p, .modal-body li { font-size: 0.95rem; line-height: 1.6; color: #444; }
         .modal-body ul, .modal-body ol { padding-left: 20px; }
         .modal-body strong { color: var(--accent-b); }
         
-        .modal-footer {
-            padding: 15px;
-            text-align: center;
-            border-top: 1px solid #eee;
-            background-color: #fcfcfc;
-            flex-shrink: 0; /* 縮まない（固定） */
-            border-bottom-left-radius: var(--border-radius);
-            border-bottom-right-radius: var(--border-radius);
-        }
-        .btn-close-fixed {
-            background-color: #444;
-            color: white;
-            border: none;
-            padding: 12px 40px;
-            border-radius: 30px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            font-family: 'Noto Serif JP', serif;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            transition: 0.3s;
-        }
+        .modal-footer { padding: 15px; text-align: center; border-top: 1px solid #eee; background-color: #fcfcfc; flex-shrink: 0; border-bottom-left-radius: var(--border-radius); border-bottom-right-radius: var(--border-radius); }
+        .btn-close-fixed { background-color: #444; color: white; border: none; padding: 12px 40px; border-radius: 30px; font-size: 1rem; font-weight: bold; cursor: pointer; font-family: 'Noto Serif JP', serif; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: 0.3s; }
         .btn-close-fixed:hover { background-color: #222; }
     </style>
 </head>
@@ -229,7 +193,6 @@
                 <h2>遊び方と解説</h2>
                 <span class="close-btn" onclick="window.closeModal()">&times;</span>
             </div>
-            
             <div class="modal-body">
                 <h3>「フラサ グスティ アッロー」とは？</h3>
                 <p><strong>「Frasa Gusti Alloh」</strong>は、スンダ語で<strong>「神の句」</strong>を意味します。<br>
@@ -253,7 +216,6 @@
                     <li><strong>運命点：</strong> 人間の「上の句」と神の「下の句」が出会った奇跡的な確率。</li>
                 </ul>
             </div>
-            
             <div class="modal-footer">
                 <button class="btn-close-fixed" onclick="window.closeModal()">閉じる</button>
             </div>
@@ -369,9 +331,19 @@
             listenToRoom();
         }
 
-        function formatPoem(text) {
-            if (!text) return "";
-            return text.replace(/[ 　]+/g, '<br>');
+        // 🔥 散らし書き（階段状）のHTMLを作る専用関数 🔥
+        function getPoemParts(text) {
+            if (!text) return [];
+            // スペース（全角・半角）で区切り、空の要素を消す
+            return text.split(/[ 　]+/).filter(p => p.length > 0);
+        }
+
+        function generatePoemHtml(parts, startIndex, colorClass) {
+            return parts.map((part, i) => {
+                // startIndexから1行ごとに1em（1文字分）ずつ下がっていく
+                const indent = Math.min(startIndex + i, 6); // はみ出し防止の最大6文字下げ
+                return `<span class="${colorClass}" style="display: block; margin-top: ${indent}em;">${part}</span>`;
+            }).join('');
         }
 
         function listenToRoom() {
@@ -410,19 +382,22 @@
                     document.getElementById("btn-submit").style.display = "none";
                     
                     if (data.resultData && data.resultData.shimonoku) {
-                        const kamiA_formatted = formatPoem(data.kaminokuA);
-                        const shimoA_formatted = formatPoem(data.resultData.shimonoku.A);
-                        const kamiB_formatted = formatPoem(data.kaminokuB);
-                        const shimoB_formatted = formatPoem(data.resultData.shimonoku.B);
+                        
+                        // 詠み人壱の処理
+                        const kamiPartsA = getPoemParts(data.kaminokuA);
+                        const shimoPartsA = getPoemParts(data.resultData.shimonoku.A);
+                        const kamiA_html = generatePoemHtml(kamiPartsA, 0, "player-a-color"); // 上の句は一番上(0)から
+                        const shimoA_html = generatePoemHtml(shimoPartsA, kamiPartsA.length, ""); // 下の句は上の句の行数の続きから下がる
 
-                        document.getElementById("full-poem-a").innerHTML = `
-                            <div class="player-a-color">${kamiA_formatted}</div>
-                            <div class="shimo-line">${shimoA_formatted}</div>
-                        `;
-                        document.getElementById("full-poem-b").innerHTML = `
-                            <div class="player-b-color">${kamiB_formatted}</div>
-                            <div class="shimo-line">${shimoB_formatted}</div>
-                        `;
+                        // 詠み人弐の処理
+                        const kamiPartsB = getPoemParts(data.kaminokuB);
+                        const shimoPartsB = getPoemParts(data.resultData.shimonoku.B);
+                        const kamiB_html = generatePoemHtml(kamiPartsB, 0, "player-b-color");
+                        const shimoB_html = generatePoemHtml(shimoPartsB, kamiPartsB.length, "");
+
+                        // 短冊に出力
+                        document.getElementById("full-poem-a").innerHTML = kamiA_html + shimoA_html;
+                        document.getElementById("full-poem-b").innerHTML = kamiB_html + shimoB_html;
                         
                         document.getElementById("result-box-a").style.display = "block";
                         document.getElementById("result-box-b").style.display = "block";
