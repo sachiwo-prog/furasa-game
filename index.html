@@ -52,21 +52,21 @@
         .result-box { background: var(--card-bg); border-radius: var(--border-radius); padding: 30px 20px; flex: 1; display: none; animation: fadeIn 0.8s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* 🔥 短冊（縦書き）デザイン 🔥 */
+        /* 🔥 美しく進化した短冊デザイン 🔥 */
         .tanzaku-wrapper {
             display: flex;
             justify-content: center;
             margin: 20px 0 30px;
         }
         .tanzaku {
-            writing-mode: vertical-rl; /* 縦書き設定 */
+            writing-mode: vertical-rl;
             font-family: 'Yuji Syuku', serif;
-            font-size: clamp(1.4rem, 4vw, 1.8rem);
-            background-color: #fdfbf5; /* 和紙のような少し黄味がかった白 */
+            font-size: clamp(1.2rem, 4vw, 1.5rem); /* 文字サイズを少し調整 */
+            background-color: #fdfbf5;
             border: 1px solid #e1d8c1;
             box-shadow: 2px 4px 12px rgba(0,0,0,0.08);
-            padding: 40px 20px;
-            min-height: 250px;
+            padding: 30px 20px;
+            min-height: 400px; /* ★高さを大幅に延長して自動折り返しを防止 */
             border-radius: 2px;
             color: #222;
             letter-spacing: 0.15em;
@@ -74,7 +74,7 @@
             text-align: left;
         }
         .tanzaku .shimo-line {
-            margin-top: 2.5em; /* 下の句を少し下から始める */
+            margin-top: 3em; /* 下の句は少し下から始める */
         }
 
         .score-box { margin: 12px 0; text-align: left; font-size: 0.95rem; line-height: 1.5; padding-bottom: 10px; border-bottom: 1px dashed #eee; }
@@ -176,14 +176,14 @@
             
             <h3>「フラサ グスティ アッロー」とは？</h3>
             <p><strong>「Frasa Gusti Alloh」</strong>は、スンダ語で<strong>「神の句」</strong>を意味します。<br>
-            人間が詠んだ「上の句」に対し、AIが予測不能な「下の句」を授け、それを厳格な審査員AIが容赦なく評価する、人間とAIによる新感覚のオンライン和歌バトルです。</p>
+            人間が詠んだ「上の句」に対し、神（AI）が予測不能な「下の句」を授け、それを厳格な審査員AIが容赦なく評価する、人間とAIによる新感覚のオンライン和歌バトルです。</p>
 
             <h3>遊び方（オンライン対戦）</h3>
             <ol>
                 <li>片方の詠み人が「新しい部屋を作る」を押し、表示された4桁の合言葉をもう一人に教えます。</li>
                 <li>もう片方の詠み人は「合言葉」を入力して「部屋に入る」を押します。</li>
-                <li>お互いに「上の句」を入力し、「準備完了」を押します。</li>
-                <li>2人とも入力が終わると、神（AI）が自動で「下の句」を生成し、毒舌審査員が厳しく採点して勝敗を決めます。</li>
+                <li>お互いに「上の句」を入力し、「準備完了」を押します。（※スペースで区切ると、短冊上で綺麗に改行されます）</li>
+                <li>2人とも入力が終わると、神が自動で「下の句」を生成し、毒舌審査員が厳しく採点して勝敗を決めます。</li>
             </ol>
 
             <h3>評価基準（合計50点満点）</h3>
@@ -299,12 +299,18 @@
             const otherInput = document.getElementById(`kaminoku-${myRole === "A" ? "b" : "a"}`);
             
             myInput.disabled = false;
-            myInput.placeholder = "あなたの上の句を入力";
+            myInput.placeholder = "上の句を入力（スペースで区切ると改行されます）";
             
             otherInput.disabled = true;
             otherInput.placeholder = "相手が入力中...";
 
             listenToRoom();
+        }
+
+        // ★スペース（全角・半角）を改行タグに変換する美文字関数
+        function formatPoem(text) {
+            if (!text) return "";
+            return text.replace(/[ 　]+/g, '<br>');
         }
 
         function listenToRoom() {
@@ -343,13 +349,19 @@
                     document.getElementById("btn-submit").style.display = "none";
                     
                     if (data.resultData && data.resultData.shimonoku) {
+                        // ★スペースで改行させる処理を適用
+                        const kamiA_formatted = formatPoem(data.kaminokuA);
+                        const shimoA_formatted = formatPoem(data.resultData.shimonoku.A);
+                        const kamiB_formatted = formatPoem(data.kaminokuB);
+                        const shimoB_formatted = formatPoem(data.resultData.shimonoku.B);
+
                         document.getElementById("full-poem-a").innerHTML = `
-                            <div>${data.kaminokuA}</div>
-                            <div class="shimo-line">${data.resultData.shimonoku.A}</div>
+                            <div>${kamiA_formatted}</div>
+                            <div class="shimo-line">${shimoA_formatted}</div>
                         `;
                         document.getElementById("full-poem-b").innerHTML = `
-                            <div>${data.kaminokuB}</div>
-                            <div class="shimo-line">${data.resultData.shimonoku.B}</div>
+                            <div>${kamiB_formatted}</div>
+                            <div class="shimo-line">${shimoB_formatted}</div>
                         `;
                         
                         document.getElementById("result-box-a").style.display = "block";
@@ -392,9 +404,11 @@
 
         async function executeAIGeneration(kamiA, kamiB) {
             try {
+                // ★AIに「スペースで区切る」ように指示を追加
                 const genPrompt = `あなたは雅でカオスな歌人です。以下の2人の詠み人の上の句に続く「下の句」を生成しJSONで返してください。
+                （※出力する下の句は、意味の区切りや7音・7音の間を必ず全角スペースで区切ってください）
                 詠み人壱:「${kamiA}」 詠み人弐:「${kamiB}」
-                形式: {"A": "詠み人壱の下の句", "B": "詠み人弐の下の句"}`;
+                形式: {"A": "詠み人壱の 下の句", "B": "詠み人弐の 下の句"}`;
                 
                 const shimoResult = await callVercelAPI(genPrompt);
                 
@@ -418,7 +432,6 @@
             } catch (error) {
                 console.error(error);
                 
-                // 状態をエラーからやり直せるようにデータベースをリセット
                 await update(ref(db, 'rooms/' + currentRoom), { 
                     status: "playing", 
                     readyA: false, 
@@ -428,12 +441,11 @@
                 if (error.message === "LIMIT") {
                     alert("【API上限】AIが混み合っています（制限到達）。しばらく待つか、別のAPIキーをお試しください。");
                 } else if (error.message === "PARSE") {
-                    alert("【AIの気まぐれ】神が言葉を間違えました！もう一度「上の句を詠む」ボタンを押して再挑戦してください。");
+                    alert("【神の気まぐれ】神が言葉を間違えました！もう一度「上の句を詠む」ボタンを押して再挑戦してください。");
                 } else {
                     alert("【通信エラー】AIサーバーとの接続に失敗しました。トップに戻ってやり直してください。");
                 }
                 
-                // ボタンをもう一度押せるように復活させる
                 document.getElementById("btn-submit").disabled = false;
                 document.getElementById(`kaminoku-${myRole.toLowerCase()}`).disabled = false;
                 isProcessingAPI = false;
