@@ -83,12 +83,12 @@
 
         <div id="lobby-section">
             <h3 style="color:#555; margin-top:0;">オンライン対戦</h3>
-            <button id="btn-create-room" class="action-btn" style="background-color: var(--accent-a);">＋ 新しい部屋を作る<br><small>（あなたがプレイヤーAになります）</small></button>
+            <button id="btn-create-room" class="action-btn" style="background-color: var(--accent-a);">＋ 新しい部屋を作る<br><small>（あなたが詠み人壱になります）</small></button>
             
             <div class="divider"><span>または</span></div>
             
             <input type="text" id="join-room-id" class="room-input" placeholder="合言葉 (4桁)" maxlength="4">
-            <button id="btn-join-room" class="action-btn" style="background-color: var(--accent-b);">➜ 部屋に入る<br><small>（あなたがプレイヤーBになります）</small></button>
+            <button id="btn-join-room" class="action-btn" style="background-color: var(--accent-b);">➜ 部屋に入る<br><small>（あなたが詠み人弐になります）</small></button>
             <div id="lobby-error" style="color: red; margin-top: 10px; font-size: 0.9em;"></div>
         </div>
 
@@ -98,12 +98,12 @@
 
             <div class="battle-inputs" id="input-section">
                 <div class="player-box player-a-box">
-                    <h2 class="player-a-color">プレイヤーA</h2>
+                    <h2 class="player-a-color">詠み人壱</h2>
                     <div id="ready-badge-a" class="ready-badge">詠み完了</div>
                     <input type="password" id="kaminoku-a" placeholder="上の句を入力">
                 </div>
                 <div class="player-box player-b-box">
-                    <h2 class="player-b-color">プレイヤーB</h2>
+                    <h2 class="player-b-color">詠み人弐</h2>
                     <div id="ready-badge-b" class="ready-badge">詠み完了</div>
                     <input type="password" id="kaminoku-b" placeholder="上の句を入力">
                 </div>
@@ -116,7 +116,7 @@
             
             <div class="battle-results">
                 <div class="result-box" id="result-box-a">
-                    <h3 class="player-a-color" style="margin-top:0;">プレイヤーAの句</h3>
+                    <h3 class="player-a-color" style="margin-top:0;">詠み人壱の句</h3>
                     <div class="brush-text" id="full-poem-a"></div>
                     <div id="score-area-a" style="display:none;" class="score-list">
                         <div id="score-details-a"></div>
@@ -124,7 +124,7 @@
                     </div>
                 </div>
                 <div class="result-box" id="result-box-b">
-                    <h3 class="player-b-color" style="margin-top:0;">プレイヤーBの句</h3>
+                    <h3 class="player-b-color" style="margin-top:0;">詠み人弐の句</h3>
                     <div class="brush-text" id="full-poem-b"></div>
                     <div id="score-area-b" style="display:none;" class="score-list">
                         <div id="score-details-b"></div>
@@ -151,8 +151,8 @@
 
             <h3>遊び方（オンライン対戦）</h3>
             <ol>
-                <li>片方のプレイヤーが「新しい部屋を作る」を押し、表示された4桁の合言葉を友達に教えます。</li>
-                <li>もう片方のプレイヤーは「合言葉」を入力して「部屋に入る」を押します。</li>
+                <li>片方の詠み人が「新しい部屋を作る」を押し、表示された4桁の合言葉をもう一人に教えます。</li>
+                <li>もう片方の詠み人は「合言葉」を入力して「部屋に入る」を押します。</li>
                 <li>お互いに「上の句」を入力し、「準備完了」を押します。</li>
                 <li>2人とも入力が終わると、AIが自動で「下の句」を生成し、毒舌審査員が厳しく採点して勝敗を決めます。</li>
             </ol>
@@ -163,8 +163,8 @@
                 <li><strong>芸術点：</strong> 文字の並びや言葉の響きの美しさ。</li>
                 <li><strong>知的点：</strong> 句に込められた知識、奥深さ、言葉遊びのセンス。</li>
                 <li><strong>インパク点：</strong> 読んだ瞬間の心への衝撃、予想を裏切るカオス度。</li>
-                <li><strong>運命点：</strong> 人間の「上の句」とAIの「下の句」が出会った奇跡的な確率。</li>
                 <li><strong>エモ点：</strong> 感情をどれだけ激しく揺さぶるか。</li>
+                <li><strong>運命点：</strong> 人間の「上の句」とAIの「下の句」が出会った奇跡的な確率。</li>
             </ul>
         </div>
     </div>
@@ -173,7 +173,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
         import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
-        // ★いただいたURLを追加した完全版設定
         const firebaseConfig = {
             apiKey: "AIzaSyCGNQ-l0LyurZSbOnxySRFVHJYLykm0qLc",
             authDomain: "furasa-game.firebaseapp.com",
@@ -270,7 +269,8 @@
             document.getElementById("display-room-id").innerText = currentRoom;
             
             const roleColor = myRole === "A" ? "var(--accent-a)" : "var(--accent-b)";
-            document.getElementById("my-role-display").innerHTML = `<strong style="color:${roleColor}; font-size:1.5em;">プレイヤー${myRole}</strong>`;
+            const roleName = myRole === "A" ? "壱" : "弐";
+            document.getElementById("my-role-display").innerHTML = `<strong style="color:${roleColor}; font-size:1.5em;">詠み人${roleName}</strong>`;
             
             const myInput = document.getElementById(`kaminoku-${myRole.toLowerCase()}`);
             const otherInput = document.getElementById(`kaminoku-${myRole === "A" ? "b" : "a"}`);
@@ -292,7 +292,7 @@
                 const statusEl = document.getElementById("status");
 
                 if (data.status === "waiting") {
-                    statusEl.innerText = "プレイヤーBの参加を待っています...";
+                    statusEl.innerText = "詠み人弐の参加を待っています...";
                 }
                 
                 if (data.status === "playing") {
@@ -351,9 +351,9 @@
 
         async function executeAIGeneration(kamiA, kamiB) {
             try {
-                const genPrompt = `あなたは雅でカオスな歌人です。以下の2人の上の句に続く「下の句」を生成しJSONで返してください。
-                A:「${kamiA}」 B:「${kamiB}」
-                形式: {"A": "Aの下の句", "B": "Bの下の句"}`;
+                const genPrompt = `あなたは雅でカオスな歌人です。以下の2人の詠み人の上の句に続く「下の句」を生成しJSONで返してください。
+                詠み人壱:「${kamiA}」 詠み人弐:「${kamiB}」
+                形式: {"A": "詠み人壱の下の句", "B": "詠み人弐の下の句"}`;
                 
                 const shimoResult = await callVercelAPI(genPrompt);
                 
@@ -363,9 +363,9 @@
                 });
 
                 const scorePrompt = `あなたは「フラサ グスティ アッロー」の毒舌審査員AIです。忖度なく、凡庸な句には低い点数と辛辣なコメントを。
-                A:「${kamiA} ${shimoResult.A}」 B:「${kamiB} ${shimoResult.B}」
+                詠み人壱:「${kamiA} ${shimoResult.A}」 詠み人弐:「${kamiB} ${shimoResult.B}」
                 5項目（各10点）で採点しJSONで返してください。
-                形式: {"A": {"芸術点":{"score":2,"comment":"凡庸"}, "知的点":{"score":1,"comment":"謎"}, "インパク点":{"score":8,"comment":"不快"}, "運命点":{"score":0,"comment":"最悪"}, "エモ点":{"score":9,"comment":"狂気"}}, "B": {同様の構成}}`;
+                形式: {"A": {"芸術点":{"score":2,"comment":"凡庸"}, "知的点":{"score":1,"comment":"謎"}, "インパク点":{"score":8,"comment":"不快"}, "エモ点":{"score":9,"comment":"狂気"}, "運命点":{"score":0,"comment":"最悪"}}, "B": {同様の構成}}`;
                 
                 const scoreResult = await callVercelAPI(scorePrompt);
 
@@ -380,10 +380,14 @@
             }
         }
 
+        // 指定した順番で確実に表示するための処理を追加
         function buildScoreHtml(scoresObj) {
             let html = ""; let total = 0;
             if (!scoresObj) return { html: "<p>審査不能</p>", total: 0 };
-            for (const key in scoresObj) {
+            
+            const order = ["芸術点", "知的点", "インパク点", "エモ点", "運命点"];
+            
+            for (const key of order) {
                 if (scoresObj[key] && scoresObj[key].score !== undefined) {
                     const score = Number(scoresObj[key].score) || 0;
                     html += `<div class="score-box"><div class="score-title"><span>${key}</span><span class="score-value">${score} / 10</span></div><div class="score-comment">${scoresObj[key].comment}</div></div>`;
@@ -406,8 +410,8 @@
             document.getElementById("score-area-b").style.display = "block";
             
             let winnerText = "";
-            if (aData.total > bData.total) winnerText = "👑 プレイヤーAの勝利";
-            else if (bData.total > aData.total) winnerText = "👑 プレイヤーBの勝利";
+            if (aData.total > bData.total) winnerText = "👑 詠み人壱の勝利";
+            else if (bData.total > aData.total) winnerText = "👑 詠み人弐の勝利";
             else winnerText = "🤝 引き分け";
             
             const announce = document.getElementById("winner-announcement");
