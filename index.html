@@ -61,12 +61,12 @@
         .tanzaku {
             writing-mode: vertical-rl;
             font-family: 'Yuji Syuku', serif;
-            font-size: clamp(1.2rem, 4vw, 1.5rem); /* 文字サイズを少し調整 */
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
             background-color: #fdfbf5;
             border: 1px solid #e1d8c1;
             box-shadow: 2px 4px 12px rgba(0,0,0,0.08);
             padding: 30px 20px;
-            min-height: 400px; /* ★高さを大幅に延長して自動折り返しを防止 */
+            min-height: 400px;
             border-radius: 2px;
             color: #222;
             letter-spacing: 0.15em;
@@ -74,7 +74,8 @@
             text-align: left;
         }
         .tanzaku .shimo-line {
-            margin-top: 3em; /* 下の句は少し下から始める */
+            margin-top: 3em; 
+            color: #222;
         }
 
         .score-box { margin: 12px 0; text-align: left; font-size: 0.95rem; line-height: 1.5; padding-bottom: 10px; border-bottom: 1px dashed #eee; }
@@ -125,12 +126,12 @@
                 <div class="player-box player-a-box">
                     <h2 class="player-a-color">詠み人壱</h2>
                     <div id="ready-badge-a" class="ready-badge">詠み完了</div>
-                    <input type="text" id="kaminoku-a" placeholder="上の句を入力">
+                    <input type="text" id="kaminoku-a" placeholder="上の句を入力" maxlength="20">
                 </div>
                 <div class="player-box player-b-box">
                     <h2 class="player-b-color">詠み人弐</h2>
                     <div id="ready-badge-b" class="ready-badge">詠み完了</div>
-                    <input type="text" id="kaminoku-b" placeholder="上の句を入力">
+                    <input type="text" id="kaminoku-b" placeholder="上の句を入力" maxlength="20">
                 </div>
             </div>
 
@@ -182,7 +183,7 @@
             <ol>
                 <li>片方の詠み人が「新しい部屋を作る」を押し、表示された4桁の合言葉をもう一人に教えます。</li>
                 <li>もう片方の詠み人は「合言葉」を入力して「部屋に入る」を押します。</li>
-                <li>お互いに「上の句」を入力し、「準備完了」を押します。（※スペースで区切ると、短冊上で綺麗に改行されます）</li>
+                <li>お互いに「上の句」を入力し、「準備完了」を押します。（※最大20文字。スペースで区切ると、短冊上で綺麗に改行されます）</li>
                 <li>2人とも入力が終わると、神が自動で「下の句」を生成し、毒舌審査員が厳しく採点して勝敗を決めます。</li>
             </ol>
 
@@ -299,7 +300,8 @@
             const otherInput = document.getElementById(`kaminoku-${myRole === "A" ? "b" : "a"}`);
             
             myInput.disabled = false;
-            myInput.placeholder = "上の句を入力（スペースで区切ると改行されます）";
+            // ★プレースホルダーにも文字数制限のヒントを追加
+            myInput.placeholder = "最大20文字・スペースで改行";
             
             otherInput.disabled = true;
             otherInput.placeholder = "相手が入力中...";
@@ -307,7 +309,6 @@
             listenToRoom();
         }
 
-        // ★スペース（全角・半角）を改行タグに変換する美文字関数
         function formatPoem(text) {
             if (!text) return "";
             return text.replace(/[ 　]+/g, '<br>');
@@ -349,18 +350,17 @@
                     document.getElementById("btn-submit").style.display = "none";
                     
                     if (data.resultData && data.resultData.shimonoku) {
-                        // ★スペースで改行させる処理を適用
                         const kamiA_formatted = formatPoem(data.kaminokuA);
                         const shimoA_formatted = formatPoem(data.resultData.shimonoku.A);
                         const kamiB_formatted = formatPoem(data.kaminokuB);
                         const shimoB_formatted = formatPoem(data.resultData.shimonoku.B);
 
                         document.getElementById("full-poem-a").innerHTML = `
-                            <div>${kamiA_formatted}</div>
+                            <div class="player-a-color">${kamiA_formatted}</div>
                             <div class="shimo-line">${shimoA_formatted}</div>
                         `;
                         document.getElementById("full-poem-b").innerHTML = `
-                            <div>${kamiB_formatted}</div>
+                            <div class="player-b-color">${kamiB_formatted}</div>
                             <div class="shimo-line">${shimoB_formatted}</div>
                         `;
                         
@@ -404,7 +404,6 @@
 
         async function executeAIGeneration(kamiA, kamiB) {
             try {
-                // ★AIに「スペースで区切る」ように指示を追加
                 const genPrompt = `あなたは雅でカオスな歌人です。以下の2人の詠み人の上の句に続く「下の句」を生成しJSONで返してください。
                 （※出力する下の句は、意味の区切りや7音・7音の間を必ず全角スペースで区切ってください）
                 詠み人壱:「${kamiA}」 詠み人弐:「${kamiB}」
