@@ -12,13 +12,11 @@
         h1 { font-family: 'Yuji Syuku', serif; font-size: clamp(2em, 5vw, 2.5em); margin: 10px 0 20px; color: var(--primary-color); letter-spacing: 0.1em; position: relative; display: inline-block; }
         h1::after { content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); width: 40px; height: 3px; background-color: var(--gold); border-radius: 2px; }
         
-        /* ロビー画面 */
         #lobby-section { background: var(--card-bg); padding: 40px 20px; border-radius: var(--border-radius); box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-top: 30px; }
         .room-input { font-size: 1.2rem; padding: 12px; width: 150px; text-align: center; letter-spacing: 0.2em; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 15px; }
         .divider { margin: 30px 0; border-bottom: 1px dashed #ccc; position: relative; }
         .divider span { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--card-bg); padding: 0 15px; color: #888; font-size: 0.9em; }
         
-        /* ゲーム画面 */
         #game-section { display: none; margin-top: 20px; }
         .room-info { background: #333; color: #fff; padding: 10px 20px; border-radius: 30px; display: inline-block; margin-bottom: 25px; font-weight: bold; letter-spacing: 0.05em; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .room-info span { color: var(--gold); font-size: 1.2em; margin-left: 10px; }
@@ -62,7 +60,6 @@
         #winner-announcement { display: none; font-family: 'Yuji Syuku', serif; font-size: clamp(2rem, 6vw, 3.5rem); color: var(--gold); margin: 50px 0; animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
-        /* フッターとモーダル */
         footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 0.9rem; }
         footer a { color: #555; text-decoration: underline; cursor: pointer; transition: 0.3s; }
         footer a:hover { color: var(--primary-color); }
@@ -86,12 +83,12 @@
 
         <div id="lobby-section">
             <h3 style="color:#555; margin-top:0;">オンライン対戦</h3>
-            <button class="action-btn" onclick="createRoom()" style="background-color: var(--accent-a);">＋ 新しい部屋を作る<br><small>（あなたがプレイヤーAになります）</small></button>
+            <button id="btn-create-room" class="action-btn" style="background-color: var(--accent-a);">＋ 新しい部屋を作る<br><small>（あなたがプレイヤーAになります）</small></button>
             
             <div class="divider"><span>または</span></div>
             
             <input type="text" id="join-room-id" class="room-input" placeholder="合言葉 (4桁)" maxlength="4">
-            <button class="action-btn" onclick="joinRoom()" style="background-color: var(--accent-b);">➜ 部屋に入る<br><small>（あなたがプレイヤーBになります）</small></button>
+            <button id="btn-join-room" class="action-btn" style="background-color: var(--accent-b);">➜ 部屋に入る<br><small>（あなたがプレイヤーBになります）</small></button>
             <div id="lobby-error" style="color: red; margin-top: 10px; font-size: 0.9em;"></div>
         </div>
 
@@ -112,7 +109,7 @@
                 </div>
             </div>
 
-            <button id="btn-submit" class="action-btn" onclick="submitKaminoku()">上の句を詠む（準備完了）</button>
+            <button id="btn-submit" class="action-btn">上の句を詠む（準備完了）</button>
             <div id="status">相手の入力を待っています...</div>
 
             <div id="winner-announcement"></div>
@@ -135,17 +132,17 @@
                     </div>
                 </div>
             </div>
-            <button id="btn-reload" class="action-btn" onclick="location.reload()" style="display:none; margin-top:40px; background-color:#555;">トップに戻る</button>
+            <button id="btn-reload" class="action-btn" style="display:none; margin-top:40px; background-color:#555;">トップに戻る</button>
         </div>
 
         <footer>
-            <a onclick="openModal()">遊び方・ゲームについて</a>
+            <a onclick="window.openModal()">遊び方・ゲームについて</a>
         </footer>
     </div>
 
     <div id="helpModal" class="modal-overlay">
         <div class="modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <span class="close-btn" onclick="window.closeModal()">&times;</span>
             <h2>遊び方と解説</h2>
             
             <h3>「フラサ グスティ アッロー」とは？</h3>
@@ -176,10 +173,11 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
         import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
-        // ★ご提示いただいた設定をそのまま使用
+        // ★いただいたURLを追加した完全版設定
         const firebaseConfig = {
             apiKey: "AIzaSyCGNQ-l0LyurZSbOnxySRFVHJYLykm0qLc",
             authDomain: "furasa-game.firebaseapp.com",
+            databaseURL: "https://furasa-game-default-rtdb.asia-southeast1.firebasedatabase.app/",
             projectId: "furasa-game",
             storageBucket: "furasa-game.firebasestorage.app",
             messagingSenderId: "1091848528817",
@@ -199,8 +197,7 @@
         let currentRoom = "";
         let isProcessingAPI = false;
 
-        // モジュール内で定義した関数を、HTMLのonclickで呼び出せるようにwindowオブジェクトに登録
-        window.createRoom = async () => {
+        document.getElementById("btn-create-room").addEventListener("click", async () => {
             try {
                 currentRoom = Math.floor(1000 + Math.random() * 9000).toString();
                 myRole = "A";
@@ -212,12 +209,12 @@
                 });
                 startGameUI();
             } catch (e) {
-                console.error(e);
-                alert("部屋の作成に失敗しました。通信環境を確認してください。");
+                console.error("Room Create Error:", e);
+                alert("部屋の作成に失敗しました。ルールの設定（true）がされているか確認してください。");
             }
-        };
+        });
 
-        window.joinRoom = async () => {
+        document.getElementById("btn-join-room").addEventListener("click", async () => {
             const inputId = document.getElementById("join-room-id").value;
             if (inputId.length !== 4) return alert("4桁の合言葉を入力してください");
             
@@ -232,12 +229,12 @@
                     document.getElementById("lobby-error").innerText = "その部屋は見つかりません。合言葉を確認してください。";
                 }
             } catch (e) {
-                console.error(e);
+                console.error("Room Join Error:", e);
                 alert("部屋の入室に失敗しました。");
             }
-        };
+        });
 
-        window.submitKaminoku = async () => {
+        document.getElementById("btn-submit").addEventListener("click", async () => {
             const myInput = document.getElementById(`kaminoku-${myRole.toLowerCase()}`).value;
             if (!myInput) return alert("上の句を入力してください！");
             
@@ -248,7 +245,11 @@
             updateData[`kaminoku${myRole}`] = myInput;
             updateData[`ready${myRole}`] = true;
             await update(ref(db, 'rooms/' + currentRoom), updateData);
-        };
+        });
+
+        document.getElementById("btn-reload").addEventListener("click", () => {
+            location.reload();
+        });
 
         window.toggleEye = (inputId, iconElement) => {
             const input = document.getElementById(inputId);
@@ -263,7 +264,6 @@
             if (event.target == modal) { modal.style.display = "none"; }
         }
 
-        // 画面の切り替え
         function startGameUI() {
             document.getElementById("lobby-section").style.display = "none";
             document.getElementById("game-section").style.display = "block";
@@ -284,7 +284,6 @@
             listenToRoom();
         }
 
-        // リアルタイム監視
         function listenToRoom() {
             onValue(ref(db, 'rooms/' + currentRoom), async (snapshot) => {
                 const data = snapshot.val();
@@ -292,7 +291,9 @@
 
                 const statusEl = document.getElementById("status");
 
-                if (data.status === "waiting") statusEl.innerText = "プレイヤーBの参加を待っています...";
+                if (data.status === "waiting") {
+                    statusEl.innerText = "プレイヤーBの参加を待っています...";
+                }
                 
                 if (data.status === "playing") {
                     if (data.readyA) document.getElementById("ready-badge-a").style.display = "block";
