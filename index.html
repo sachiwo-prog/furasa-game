@@ -6,18 +6,19 @@
     <title>フラサ グスティ アッロー - オンライン対戦 -</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Yuji+Syuku&display=swap" rel="stylesheet">
     <style>
-        /* CSSはそのままです */
         :root { --primary-color: #1a1a1a; --bg-color: #f7f9fa; --card-bg: #ffffff; --accent-a: #2b5c8f; --accent-b: #8f2b3e; --gold: #d4af37; --border-radius: 16px; }
         body { font-family: 'Noto Serif JP', serif; background-color: var(--bg-color); color: var(--primary-color); text-align: center; padding: 20px 15px; margin: 0; }
-        .container { max-width: 800px; margin: 0 auto; padding-bottom: 40px; }
+        .container { max-width: 800px; margin: 0 auto; padding-bottom: 20px; }
         h1 { font-family: 'Yuji Syuku', serif; font-size: clamp(2em, 5vw, 2.5em); margin: 10px 0 20px; color: var(--primary-color); letter-spacing: 0.1em; position: relative; display: inline-block; }
         h1::after { content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); width: 40px; height: 3px; background-color: var(--gold); border-radius: 2px; }
         
+        /* ロビー画面 */
         #lobby-section { background: var(--card-bg); padding: 40px 20px; border-radius: var(--border-radius); box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-top: 30px; }
         .room-input { font-size: 1.2rem; padding: 12px; width: 150px; text-align: center; letter-spacing: 0.2em; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 15px; }
         .divider { margin: 30px 0; border-bottom: 1px dashed #ccc; position: relative; }
         .divider span { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--card-bg); padding: 0 15px; color: #888; font-size: 0.9em; }
         
+        /* ゲーム画面 */
         #game-section { display: none; margin-top: 20px; }
         .room-info { background: #333; color: #fff; padding: 10px 20px; border-radius: 30px; display: inline-block; margin-bottom: 25px; font-weight: bold; letter-spacing: 0.05em; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .room-info span { color: var(--gold); font-size: 1.2em; margin-left: 10px; }
@@ -60,6 +61,22 @@
         .total-score { font-family: 'Yuji Syuku', serif; font-size: 2.5rem; margin: 25px 0 10px; font-weight: bold; border-top: 1px solid #ddd; padding-top: 20px; }
         #winner-announcement { display: none; font-family: 'Yuji Syuku', serif; font-size: clamp(2rem, 6vw, 3.5rem); color: var(--gold); margin: 50px 0; animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        /* フッターとモーダル */
+        footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 0.9rem; }
+        footer a { color: #555; text-decoration: underline; cursor: pointer; transition: 0.3s; }
+        footer a:hover { color: var(--primary-color); }
+
+        .modal-overlay { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
+        .modal-content { background-color: var(--card-bg); margin: 10vh auto; padding: 30px; border-radius: var(--border-radius); width: 85%; max-width: 600px; max-height: 80vh; overflow-y: auto; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: slideDown 0.3s ease; position: relative; }
+        @keyframes slideDown { from {transform: translateY(-30px); opacity: 0;} to {transform: translateY(0); opacity: 1;} }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 28px; font-weight: bold; color: #aaa; cursor: pointer; transition: 0.3s; }
+        .close-btn:hover { color: #333; }
+        .modal-content h2 { font-family: 'Yuji Syuku', serif; color: var(--primary-color); border-bottom: 2px solid var(--gold); padding-bottom: 10px; margin-top: 0; }
+        .modal-content h3 { color: var(--accent-a); margin-top: 25px; font-size: 1.1em; }
+        .modal-content p, .modal-content li { font-size: 0.95rem; line-height: 1.6; color: #444; }
+        .modal-content ul, .modal-content ol { padding-left: 20px; }
+        .modal-content strong { color: var(--accent-b); }
     </style>
 </head>
 <body>
@@ -69,12 +86,12 @@
 
         <div id="lobby-section">
             <h3 style="color:#555; margin-top:0;">オンライン対戦</h3>
-            <button id="btn-create-room" class="action-btn" style="background-color: var(--accent-a);">＋ 新しい部屋を作る<br><small>（あなたがプレイヤーAになります）</small></button>
+            <button class="action-btn" onclick="createRoom()" style="background-color: var(--accent-a);">＋ 新しい部屋を作る<br><small>（あなたがプレイヤーAになります）</small></button>
             
             <div class="divider"><span>または</span></div>
             
             <input type="text" id="join-room-id" class="room-input" placeholder="合言葉 (4桁)" maxlength="4">
-            <button id="btn-join-room" class="action-btn" style="background-color: var(--accent-b);">➜ 部屋に入る<br><small>（あなたがプレイヤーBになります）</small></button>
+            <button class="action-btn" onclick="joinRoom()" style="background-color: var(--accent-b);">➜ 部屋に入る<br><small>（あなたがプレイヤーBになります）</small></button>
             <div id="lobby-error" style="color: red; margin-top: 10px; font-size: 0.9em;"></div>
         </div>
 
@@ -95,7 +112,7 @@
                 </div>
             </div>
 
-            <button id="btn-submit" class="action-btn">上の句を詠む（準備完了）</button>
+            <button id="btn-submit" class="action-btn" onclick="submitKaminoku()">上の句を詠む（準備完了）</button>
             <div id="status">相手の入力を待っています...</div>
 
             <div id="winner-announcement"></div>
@@ -118,19 +135,51 @@
                     </div>
                 </div>
             </div>
-            <button id="btn-reload" class="action-btn" style="display:none; margin-top:40px; background-color:#555;">トップに戻る</button>
+            <button id="btn-reload" class="action-btn" onclick="location.reload()" style="display:none; margin-top:40px; background-color:#555;">トップに戻る</button>
+        </div>
+
+        <footer>
+            <a onclick="openModal()">遊び方・ゲームについて</a>
+        </footer>
+    </div>
+
+    <div id="helpModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2>遊び方と解説</h2>
+            
+            <h3>「フラサ グスティ アッロー」とは？</h3>
+            <p><strong>「Frasa Gusti Alloh」</strong>は、スンダ語で<strong>「神の句」</strong>を意味します。<br>
+            人間が詠んだ「上の句」に対し、AIが予測不能な「下の句」を授け、それを厳格な審査員AIが容赦なく評価する、人間とAIによる新感覚のオンライン和歌バトルです。</p>
+
+            <h3>遊び方（オンライン対戦）</h3>
+            <ol>
+                <li>片方のプレイヤーが「新しい部屋を作る」を押し、表示された4桁の合言葉を友達に教えます。</li>
+                <li>もう片方のプレイヤーは「合言葉」を入力して「部屋に入る」を押します。</li>
+                <li>お互いに「上の句」を入力し、「準備完了」を押します。</li>
+                <li>2人とも入力が終わると、AIが自動で「下の句」を生成し、毒舌審査員が厳しく採点して勝敗を決めます。</li>
+            </ol>
+
+            <h3>評価基準（合計50点満点）</h3>
+            <p>審査員AIは忖度を一切しません。以下の5項目（各10点）で厳格に審査し、凡庸な句は辛辣なコメントと共に斬り捨てられます。</p>
+            <ul>
+                <li><strong>芸術点：</strong> 文字の並びや言葉の響きの美しさ。</li>
+                <li><strong>知的点：</strong> 句に込められた知識、奥深さ、言葉遊びのセンス。</li>
+                <li><strong>インパク点：</strong> 読んだ瞬間の心への衝撃、予想を裏切るカオス度。</li>
+                <li><strong>運命点：</strong> 人間の「上の句」とAIの「下の句」が出会った奇跡的な確率。</li>
+                <li><strong>エモ点：</strong> 感情をどれだけ激しく揺さぶるか。</li>
+            </ul>
         </div>
     </div>
 
     <script type="module">
-        // ★ご提示いただいたバージョン（12.11.0）に合わせました
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
         import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
+        // ★ご提示いただいた設定をそのまま使用
         const firebaseConfig = {
             apiKey: "AIzaSyCGNQ-l0LyurZSbOnxySRFVHJYLykm0qLc",
             authDomain: "furasa-game.firebaseapp.com",
-            databaseURL: "https://furasa-game-default-rtdb.firebaseio.com", // ここがないと動かない場合があります
             projectId: "furasa-game",
             storageBucket: "furasa-game.firebasestorage.app",
             messagingSenderId: "1091848528817",
@@ -138,16 +187,20 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        let db;
+        try {
+            db = getDatabase(app);
+        } catch (e) {
+            console.error("Firebase DB Error:", e);
+            alert("通信の準備に失敗しました。画面を再読み込みしてください。");
+        }
 
         let myRole = ""; 
         let currentRoom = "";
         let isProcessingAPI = false;
 
-        // ==========================================
-        // ★ボタンを押した時の動きを確実に行うための紐付け
-        // ==========================================
-        document.getElementById("btn-create-room").addEventListener("click", async () => {
+        // モジュール内で定義した関数を、HTMLのonclickで呼び出せるようにwindowオブジェクトに登録
+        window.createRoom = async () => {
             try {
                 currentRoom = Math.floor(1000 + Math.random() * 9000).toString();
                 myRole = "A";
@@ -159,12 +212,12 @@
                 });
                 startGameUI();
             } catch (e) {
-                alert("データベースへの接続に失敗しました。");
                 console.error(e);
+                alert("部屋の作成に失敗しました。通信環境を確認してください。");
             }
-        });
+        };
 
-        document.getElementById("btn-join-room").addEventListener("click", async () => {
+        window.joinRoom = async () => {
             const inputId = document.getElementById("join-room-id").value;
             if (inputId.length !== 4) return alert("4桁の合言葉を入力してください");
             
@@ -179,12 +232,12 @@
                     document.getElementById("lobby-error").innerText = "その部屋は見つかりません。合言葉を確認してください。";
                 }
             } catch (e) {
-                alert("データベースへの接続に失敗しました。");
                 console.error(e);
+                alert("部屋の入室に失敗しました。");
             }
-        });
+        };
 
-        document.getElementById("btn-submit").addEventListener("click", async () => {
+        window.submitKaminoku = async () => {
             const myInput = document.getElementById(`kaminoku-${myRole.toLowerCase()}`).value;
             if (!myInput) return alert("上の句を入力してください！");
             
@@ -195,13 +248,22 @@
             updateData[`kaminoku${myRole}`] = myInput;
             updateData[`ready${myRole}`] = true;
             await update(ref(db, 'rooms/' + currentRoom), updateData);
-        });
+        };
 
-        document.getElementById("btn-reload").addEventListener("click", () => {
-            location.reload();
-        });
+        window.toggleEye = (inputId, iconElement) => {
+            const input = document.getElementById(inputId);
+            if (input.type === "text") { input.type = "password"; iconElement.innerText = "👁️"; } 
+            else { input.type = "text"; iconElement.innerText = "🙈"; }
+        };
 
-        // 画面の切り替え設定
+        window.openModal = () => { document.getElementById("helpModal").style.display = "block"; };
+        window.closeModal = () => { document.getElementById("helpModal").style.display = "none"; };
+        window.onclick = function(event) {
+            const modal = document.getElementById("helpModal");
+            if (event.target == modal) { modal.style.display = "none"; }
+        }
+
+        // 画面の切り替え
         function startGameUI() {
             document.getElementById("lobby-section").style.display = "none";
             document.getElementById("game-section").style.display = "block";
@@ -222,7 +284,7 @@
             listenToRoom();
         }
 
-        // リアルタイム通信（相手の動きを監視する）
+        // リアルタイム監視
         function listenToRoom() {
             onValue(ref(db, 'rooms/' + currentRoom), async (snapshot) => {
                 const data = snapshot.val();
@@ -230,9 +292,7 @@
 
                 const statusEl = document.getElementById("status");
 
-                if (data.status === "waiting") {
-                    statusEl.innerText = "プレイヤーBの参加を待っています...";
-                }
+                if (data.status === "waiting") statusEl.innerText = "プレイヤーBの参加を待っています...";
                 
                 if (data.status === "playing") {
                     if (data.readyA) document.getElementById("ready-badge-a").style.display = "block";
