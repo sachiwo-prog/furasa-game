@@ -31,7 +31,8 @@
         .player-a-color { color: var(--accent-a); }
         .player-b-color { color: var(--accent-b); }
         
-        input[type="text"], input[type="password"] { font-size: 1rem; padding: 15px; width: 100%; box-sizing: border-box; border: 1px solid #e0e0e0; border-radius: 8px; font-family: inherit; background-color: #fafafa; outline: none; transition: 0.3s; text-align: center;}
+        /* 隠す機能を削除し、スッキリしたテキスト入力に */
+        input[type="text"] { font-size: 1rem; padding: 15px; width: 100%; box-sizing: border-box; border: 1px solid #e0e0e0; border-radius: 8px; font-family: inherit; background-color: #fafafa; outline: none; transition: 0.3s; text-align: center;}
         input:focus { background-color: #fff; border-color: #aaa; box-shadow: 0 0 0 3px rgba(0,0,0,0.05); }
         input:disabled { background-color: #eee; color: #888; cursor: not-allowed; }
         
@@ -51,7 +52,32 @@
         @media (min-width: 768px) { .battle-results { flex-direction: row; align-items: flex-start;} }
         .result-box { background: var(--card-bg); border-radius: var(--border-radius); padding: 30px 20px; flex: 1; display: none; animation: fadeIn 0.8s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .brush-text { font-family: 'Yuji Syuku', serif; font-size: clamp(1.6rem, 4vw, 2.2rem); line-height: 1.6; color: #000; margin: 25px 0; padding: 20px 10px; background: rgba(0,0,0,0.02); border-radius: 8px; text-align: center; }
+        
+        /* 🔥 短冊（縦書き）デザイン 🔥 */
+        .tanzaku-wrapper {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0 30px;
+        }
+        .tanzaku {
+            writing-mode: vertical-rl; /* 縦書き設定 */
+            font-family: 'Yuji Syuku', serif;
+            font-size: clamp(1.4rem, 4vw, 1.8rem);
+            background-color: #fdfbf5; /* 和紙のような少し黄味がかった白 */
+            border: 1px solid #e1d8c1;
+            box-shadow: 2px 4px 12px rgba(0,0,0,0.08);
+            padding: 40px 20px;
+            min-height: 250px; /* 短冊の長さ */
+            border-radius: 2px;
+            color: #222;
+            letter-spacing: 0.15em;
+            line-height: 2.2; /* 行間 */
+            text-align: left;
+        }
+        .tanzaku .shimo-line {
+            margin-top: 2.5em; /* 下の句を少し下から始める */
+        }
+
         .score-box { margin: 12px 0; text-align: left; font-size: 0.95rem; line-height: 1.5; padding-bottom: 10px; border-bottom: 1px dashed #eee; }
         .score-title { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 6px; color: var(--primary-color); }
         .score-value { font-weight: bold; font-size: 1.1em; }
@@ -100,12 +126,12 @@
                 <div class="player-box player-a-box">
                     <h2 class="player-a-color">詠み人壱</h2>
                     <div id="ready-badge-a" class="ready-badge">詠み完了</div>
-                    <input type="password" id="kaminoku-a" placeholder="上の句を入力">
+                    <input type="text" id="kaminoku-a" placeholder="上の句を入力">
                 </div>
                 <div class="player-box player-b-box">
                     <h2 class="player-b-color">詠み人弐</h2>
                     <div id="ready-badge-b" class="ready-badge">詠み完了</div>
-                    <input type="password" id="kaminoku-b" placeholder="上の句を入力">
+                    <input type="text" id="kaminoku-b" placeholder="上の句を入力">
                 </div>
             </div>
 
@@ -117,7 +143,9 @@
             <div class="battle-results">
                 <div class="result-box" id="result-box-a">
                     <h3 class="player-a-color" style="margin-top:0;">詠み人壱の句</h3>
-                    <div class="brush-text" id="full-poem-a"></div>
+                    <div class="tanzaku-wrapper">
+                        <div class="tanzaku" id="full-poem-a"></div>
+                    </div>
                     <div id="score-area-a" style="display:none;" class="score-list">
                         <div id="score-details-a"></div>
                         <div class="total-score player-a-color" id="total-result-a"></div>
@@ -125,7 +153,9 @@
                 </div>
                 <div class="result-box" id="result-box-b">
                     <h3 class="player-b-color" style="margin-top:0;">詠み人弐の句</h3>
-                    <div class="brush-text" id="full-poem-b"></div>
+                    <div class="tanzaku-wrapper">
+                        <div class="tanzaku" id="full-poem-b"></div>
+                    </div>
                     <div id="score-area-b" style="display:none;" class="score-list">
                         <div id="score-details-b"></div>
                         <div class="total-score player-b-color" id="total-result-b"></div>
@@ -250,12 +280,6 @@
             location.reload();
         });
 
-        window.toggleEye = (inputId, iconElement) => {
-            const input = document.getElementById(inputId);
-            if (input.type === "text") { input.type = "password"; iconElement.innerText = "👁️"; } 
-            else { input.type = "text"; iconElement.innerText = "🙈"; }
-        };
-
         window.openModal = () => { document.getElementById("helpModal").style.display = "block"; };
         window.closeModal = () => { document.getElementById("helpModal").style.display = "none"; };
         window.onclick = function(event) {
@@ -275,9 +299,11 @@
             const myInput = document.getElementById(`kaminoku-${myRole.toLowerCase()}`);
             const otherInput = document.getElementById(`kaminoku-${myRole === "A" ? "b" : "a"}`);
             
+            // パスワードを廃止し、通常のテキストフィールドに
             myInput.type = "text";
             myInput.placeholder = "あなたの上の句を入力";
             
+            otherInput.type = "text";
             otherInput.disabled = true;
             otherInput.placeholder = "相手が入力中...";
 
@@ -306,7 +332,7 @@
                     }
                 }
 
-                if (data.status === "generating") statusEl.innerText = "AIが両者の下の句を思考中...";
+                if (data.status === "generating") statusEl.innerText = "神が下の句を授けています...";
                 if (data.status === "scoring") statusEl.innerText = "AIが両者を容赦なく審査中...";
                 
                 if (data.readyA && data.readyB && data.status === "playing" && myRole === "A" && !isProcessingAPI) {
@@ -320,8 +346,16 @@
                     document.getElementById("btn-submit").style.display = "none";
                     
                     if (data.resultData && data.resultData.shimonoku) {
-                        document.getElementById("full-poem-a").innerText = `${data.kaminokuA}　${data.resultData.shimonoku.A}`;
-                        document.getElementById("full-poem-b").innerText = `${data.kaminokuB}　${data.resultData.shimonoku.B}`;
+                        // 短冊用にHTMLを組み立て（上の句と下の句を分ける）
+                        document.getElementById("full-poem-a").innerHTML = `
+                            <div>${data.kaminokuA}</div>
+                            <div class="shimo-line">${data.resultData.shimonoku.A}</div>
+                        `;
+                        document.getElementById("full-poem-b").innerHTML = `
+                            <div>${data.kaminokuB}</div>
+                            <div class="shimo-line">${data.resultData.shimonoku.B}</div>
+                        `;
+                        
                         document.getElementById("result-box-a").style.display = "block";
                         document.getElementById("result-box-b").style.display = "block";
                     }
@@ -380,7 +414,6 @@
             }
         }
 
-        // 指定した順番で確実に表示するための処理を追加
         function buildScoreHtml(scoresObj) {
             let html = ""; let total = 0;
             if (!scoresObj) return { html: "<p>審査不能</p>", total: 0 };
